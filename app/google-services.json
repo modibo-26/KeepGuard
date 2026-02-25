@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:466343435172:android:83c4d5d14cfdacfaf23f31",
+        "mobilesdk_app_id": "1:466343435172:android:da1c764db204ff86f23f31",
         "android_client_info": {
-          "package_name": "com.keepguard"
+          "package_name": "com.modibo.keepguard"
         }
       },
       "oauth_client": [],
