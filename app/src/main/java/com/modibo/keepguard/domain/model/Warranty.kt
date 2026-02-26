@@ -14,6 +14,6 @@ data class Warranty(
     val createdAt: Long = 0
 )
 
-//// Statut calculé dynamiquement — jamais stocké dans la data class
-//val Warranty.status: WarrantyStatus
-//    get() = WarrantyStatusCalculator.calculate(endDate)// Passée
+// Statut calculé dynamiquement
+val Warranty.status: WarrantyStatus
+    get() = WarrantyStatusCalculator.calculate(endDate)// Passée
