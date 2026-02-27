@@ -1,5 +1,7 @@
 package com.modibo.keepguard.domain.model
 
+import com.modibo.keepguard.core.util.WarrantyStatusCalculator
+
 data class Warranty(
     val id: String = "",
     val assetId: String = "",
