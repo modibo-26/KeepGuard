@@ -187,7 +187,8 @@ com.modibo.keepguard
 │   │   ├── EmptyState.kt
 │   │   ├── LoadingState.kt
 │   │   └── ErrorState.kt
-│   │
+│
+├── ui/                              # 🎨 THÈME (convention Android standard)
 │   └── theme/
 │       ├── Color.kt
 │       ├── Type.kt
