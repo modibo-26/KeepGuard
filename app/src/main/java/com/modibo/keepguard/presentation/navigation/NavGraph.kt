@@ -10,6 +10,9 @@ import androidx.navigation.navArgument
 import com.modibo.keepguard.presentation.screen.assets.detail.AssetDetailScreen
 import com.modibo.keepguard.presentation.screen.assets.form.AssetFormScreen
 import com.modibo.keepguard.presentation.screen.assets.list.AssetListScreen
+import com.modibo.keepguard.presentation.screen.warranty.detail.WarrantyDetailScreen
+import com.modibo.keepguard.presentation.screen.warranty.form.WarrantyFormScreen
+import com.modibo.keepguard.presentation.screen.warranty.list.WarrantyListScreen
 
 @Composable
 fun NavGraph(navHostController: NavHostController) {
@@ -31,6 +34,7 @@ fun NavGraph(navHostController: NavHostController) {
                 onBack = { navHostController.popBackStack() },
                 onEdit = { assetId -> navHostController.navigate("asset_form?assetId=$assetId") },
                 onDelete = { navHostController.popBackStack() },
+                onWarranties = { assetId -> navHostController.navigate("warranty_list/$assetId") },
             )
         }
         composable(
@@ -46,9 +50,47 @@ fun NavGraph(navHostController: NavHostController) {
             )
         }
         composable(
-            "warranty_form/{assetId}",
+            "warranty_list/{assetId}",
             arguments = listOf(navArgument("assetId") { type = NavType.StringType })
-        ) { Text("Warranty Form") }
+        ) {
+            WarrantyListScreen(
+                onWarrantyClick = { warrantyId -> navHostController.navigate("warranty_detail/$warrantyId") },
+                onAddClick = {
+                    val assetId = it.arguments?.getString("assetId") ?: ""
+                    navHostController.navigate("warranty_form/$assetId")
+                },
+                onBack = { navHostController.popBackStack() }
+            )
+        }
+        composable(
+            "warranty_detail/{warrantyId}",
+            arguments = listOf(navArgument("warrantyId") { type = NavType.StringType })
+        ) {
+            WarrantyDetailScreen(
+                onBack = { navHostController.popBackStack() },
+                onEdit = { warrantyId ->
+                    val warranty = it.arguments?.getString("warrantyId") ?: ""
+                    navHostController.navigate("warranty_form/_?warrantyId=$warrantyId")
+                },
+                onDelete = { navHostController.popBackStack() }
+            )
+        }
+        composable(
+            "warranty_form/{assetId}?warrantyId={warrantyId}",
+            arguments = listOf(
+                navArgument("assetId") { type = NavType.StringType },
+                navArgument("warrantyId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) {
+            WarrantyFormScreen(
+                onSaved = { navHostController.popBackStack() },
+                onBack = { navHostController.popBackStack() }
+            )
+        }
         composable(
             "maintenance_form/{assetId}",
             arguments = listOf(navArgument("assetId") { type = NavType.StringType })
