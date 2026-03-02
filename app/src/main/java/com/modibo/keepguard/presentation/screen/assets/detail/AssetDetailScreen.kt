@@ -28,6 +28,7 @@ fun AssetDetailScreen(
     onEdit: (assetId: String) -> Unit,
     onDelete: () -> Unit,
     onWarranties: (assetId: String) -> Unit = {},
+    onMaintenances: (assetId: String) -> Unit = {},
 ) {
     val state by viewModel.state.collectAsState()
 
@@ -71,6 +72,9 @@ fun AssetDetailScreen(
                 Text(text = asset.purchasePlace)
                 Button({ onWarranties(asset.id) }) {
                     Text("Garanties")
+                }
+                Button({ onMaintenances(asset.id) }) {
+                    Text("Entretiens")
                 }
                 Button({ onEdit(asset.id) }) {
                     Text("Modifier")

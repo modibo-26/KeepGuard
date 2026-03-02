@@ -12,5 +12,7 @@ sealed class Screen (
     data class WarrantyList(val assetId: String) : Screen("warranty_list/{assetId}")
     data class WarrantyDetail(val warrantyId: String) : Screen("warranty_detail/{warrantyId}")
     data class WarrantyForm(val assetId: String, val warrantyId: String? = null) : Screen("warranty_form/{assetId}?warrantyId={warrantyId}")
-    data class MaintenanceForm(val assetId : String) : Screen("maintenance_form/{assetId}")
+    data class MaintenanceList(val assetId: String) : Screen("maintenance_list/{assetId}")
+    data class MaintenanceDetail(val maintenanceId: String) : Screen("maintenance_detail/{maintenanceId}")
+    data class MaintenanceForm(val assetId: String, val maintenanceId: String? = null) : Screen("maintenance_form/{assetId}?maintenanceId={maintenanceId}")
 }

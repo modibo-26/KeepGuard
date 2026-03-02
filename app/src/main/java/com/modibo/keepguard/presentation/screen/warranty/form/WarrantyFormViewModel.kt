@@ -36,7 +36,7 @@ class WarrantyFormViewModel @Inject constructor(
     private val getCurrentUserUseCase: GetCurrentUserUseCase,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
-    private val assetId: String = savedStateHandle.get<String>("assetId") ?: ""
+    private var assetId: String = savedStateHandle.get<String>("assetId") ?: ""
     private val warrantyId: String = savedStateHandle.get<String>("warrantyId") ?: ""
 
     private val _state = MutableStateFlow(WarrantyFormState())
@@ -98,6 +98,7 @@ class WarrantyFormViewModel @Inject constructor(
                     is Resource.Loading -> _state.value = _state.value.copy(isLoading = true)
                     is Resource.Success -> {
                         val warranty = resource.data!!
+                        assetId = warranty.assetId
                         _state.value = _state.value.copy(
                             type = warranty.type,
                             startDate = warranty.startDate,

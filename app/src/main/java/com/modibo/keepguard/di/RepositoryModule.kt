@@ -2,9 +2,11 @@ package com.modibo.keepguard.di
 
 import com.modibo.keepguard.data.repository.AssetRepositoryImpl
 import com.modibo.keepguard.data.repository.AuthRepositoryImpl
+import com.modibo.keepguard.data.repository.MaintenanceRepositoryImpl
 import com.modibo.keepguard.data.repository.WarrantyRepositoryImpl
 import com.modibo.keepguard.domain.repository.AssetRepository
 import com.modibo.keepguard.domain.repository.AuthRepository
+import com.modibo.keepguard.domain.repository.MaintenanceRepository
 import com.modibo.keepguard.domain.repository.WarrantyRepository
 import dagger.Binds
 import dagger.Module
@@ -26,4 +28,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindWarrantyRepository(impl: WarrantyRepositoryImpl): WarrantyRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindMaintenanceRepository(impl: MaintenanceRepositoryImpl): MaintenanceRepository
 }
