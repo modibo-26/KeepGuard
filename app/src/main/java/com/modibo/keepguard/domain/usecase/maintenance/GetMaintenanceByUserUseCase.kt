@@ -6,5 +6,5 @@ import javax.inject.Inject
 class GetMaintenanceByUserUseCase @Inject constructor(
     private val repository: MaintenanceRepository
 ) {
-    operator fun invoke(userId: String) = repository.getMaintenancesByUser(userId)
+    operator fun invoke() = repository.getMaintenancesByUser()
 }

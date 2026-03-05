@@ -1,5 +1,6 @@
 package com.modibo.keepguard.data.repository
 
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.modibo.keepguard.core.util.Resource
 import com.modibo.keepguard.data.remote.dto.MaintenanceDto
@@ -13,13 +14,15 @@ import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 class MaintenanceRepositoryImpl @Inject constructor(
-    private val firestore: FirebaseFirestore
+    private val firestore: FirebaseFirestore,
+    private val auth: FirebaseAuth,
 ): MaintenanceRepository {
     override fun addMaintenance(maintenance: Maintenance): Flow<Resource<Unit>> = flow {
         emit(Resource.Loading())
         try {
+            val userId = auth.currentUser?.uid ?: throw Exception("Non connecté")
             firestore.collection("maintenances")
-                .add(maintenance.toDto())
+                .add(maintenance.toDto().copy(userId = userId))
                 .await()
             emit(Resource.Success(Unit))
         } catch (e: Exception) {
@@ -63,9 +66,10 @@ class MaintenanceRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun getMaintenancesByUser(userId: String): Flow<Resource<List<Maintenance>>> = flow {
+    override fun getMaintenancesByUser(): Flow<Resource<List<Maintenance>>> = flow {
         emit(Resource.Loading())
         try {
+            val userId = auth.currentUser?.uid ?: throw Exception("Non connecté")
             val snapshot = firestore.collection("maintenances")
                 .whereEqualTo("userId", userId)
                 .get()

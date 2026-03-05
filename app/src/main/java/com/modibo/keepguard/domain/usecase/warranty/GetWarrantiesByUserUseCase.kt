@@ -6,5 +6,5 @@ import javax.inject.Inject
 class GetWarrantiesByUserUseCase @Inject constructor(
     private val repository: WarrantyRepository
 ) {
-    operator fun invoke(userId: String) = repository.getWarrantiesByUser(userId)
+    operator fun invoke() = repository.getWarrantiesByUser()
 }

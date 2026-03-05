@@ -20,8 +20,8 @@ data class MaintenanceListState(
 
 @HiltViewModel
 class MaintenanceListViewModel @Inject constructor(
-    private val getMaintenancesByAssetUseCase: GetMaintenancesByAssetUseCase,
-    private val savedStateHandle: SavedStateHandle
+    private val getMaintenancesByAsset: GetMaintenancesByAssetUseCase,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
     private val assetId: String = savedStateHandle.get<String>("assetId") ?: ""
 
@@ -35,7 +35,7 @@ class MaintenanceListViewModel @Inject constructor(
     fun loadMaintenances() {
         if (assetId.isEmpty()) return
         viewModelScope.launch {
-            getMaintenancesByAssetUseCase(assetId).collect { resource ->
+            getMaintenancesByAsset(assetId).collect { resource ->
                 when (resource) {
                     is Resource.Loading -> _state.value = _state.value.copy(isLoading = true)
                     is Resource.Success -> _state.value = _state.value.copy(

@@ -8,7 +8,7 @@ interface WarrantyRepository {
     fun addWarranty(warranty: Warranty): Flow<Resource<Unit>>
     fun getWarrantiesByAsset(assetId: String): Flow<Resource<List<Warranty>>>
     fun getWarrantyById(warrantyId: String): Flow<Resource<Warranty>>
-    fun getWarrantiesByUser(userId: String) : Flow<Resource<List<Warranty>>>
+    fun getWarrantiesByUser() : Flow<Resource<List<Warranty>>>
     fun updateWarranty(warranty: Warranty): Flow<Resource<Unit>>
     fun deleteWarranty(warrantyId: String): Flow<Resource<Unit>>
 }

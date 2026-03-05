@@ -9,7 +9,6 @@ import com.modibo.keepguard.domain.model.Warranty
 import com.modibo.keepguard.domain.model.WarrantyStatus
 import com.modibo.keepguard.domain.model.status
 import com.modibo.keepguard.domain.usecase.asset.GetAssetsUseCase
-import com.modibo.keepguard.domain.usecase.auth.GetCurrentUserUseCase
 import com.modibo.keepguard.domain.usecase.maintenance.GetMaintenanceByUserUseCase
 import com.modibo.keepguard.domain.usecase.warranty.GetWarrantiesByUserUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -34,10 +33,9 @@ data class HomeState(
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val getAssetsUseCase: GetAssetsUseCase,
-    private val getWarrantiesByUserUseCase: GetWarrantiesByUserUseCase,
-    private val getMaintenanceByUserUseCase: GetMaintenanceByUserUseCase,
-    private val getCurrentUserUseCase: GetCurrentUserUseCase
+    private val getAssets: GetAssetsUseCase,
+    private val getWarrantiesByUser: GetWarrantiesByUserUseCase,
+    private val getMaintenanceByUser: GetMaintenanceByUserUseCase
 ) : ViewModel() {
     private val _state = MutableStateFlow(HomeState())
     val state: StateFlow<HomeState> = _state
@@ -47,11 +45,10 @@ class HomeViewModel @Inject constructor(
     }
 
     fun loadData() {
-        val userId = getCurrentUserUseCase()?.id ?: return
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true)
             launch {
-                getAssetsUseCase(userId).collect { resource ->
+                getAssets().collect { resource ->
                     when (resource) {
                         is Resource.Loading -> {}
                         is Resource.Success -> _state.value = _state.value.copy(
@@ -62,7 +59,7 @@ class HomeViewModel @Inject constructor(
                 }
             }
             launch {
-                getWarrantiesByUserUseCase(userId).collect { resource ->
+                getWarrantiesByUser().collect { resource ->
                     when (resource) {
                         is Resource.Loading -> {}
                         is Resource.Success -> _state.value = _state.value.copy(
@@ -73,7 +70,7 @@ class HomeViewModel @Inject constructor(
                 }
             }
             launch {
-                getMaintenanceByUserUseCase(userId).collect { resource ->
+                getMaintenanceByUser().collect { resource ->
                     when (resource) {
                         is Resource.Loading -> {}
                         is Resource.Success -> _state.value = _state.value.copy(

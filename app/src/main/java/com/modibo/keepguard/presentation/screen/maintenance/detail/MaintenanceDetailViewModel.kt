@@ -22,9 +22,9 @@ data class MaintenanceDetailState(
 
 @HiltViewModel
 class MaintenanceDetailViewModel @Inject constructor(
-    private val getMaintenanceByIdUseCase: GetMaintenanceByIdUseCase,
-    private val deleteMaintenanceUseCase: DeleteMaintenanceUseCase,
-    private val savedStateHandle: SavedStateHandle
+    private val getMaintenanceById: GetMaintenanceByIdUseCase,
+    private val deleteMaintenance: DeleteMaintenanceUseCase,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
     private val maintenanceId: String = savedStateHandle.get<String>("maintenanceId") ?: ""
 
@@ -37,7 +37,7 @@ class MaintenanceDetailViewModel @Inject constructor(
 
     fun loadMaintenance() {
         viewModelScope.launch {
-            getMaintenanceByIdUseCase(maintenanceId).collect { resource ->
+            getMaintenanceById(maintenanceId).collect { resource ->
                 when (resource) {
                     is Resource.Loading -> _state.value = _state.value.copy(isLoading = true)
                     is Resource.Success -> _state.value = _state.value.copy(
@@ -55,7 +55,7 @@ class MaintenanceDetailViewModel @Inject constructor(
 
     fun deleteMaintenance() {
         viewModelScope.launch {
-            deleteMaintenanceUseCase(maintenanceId).collect { resource ->
+            deleteMaintenance(maintenanceId).collect { resource ->
                 when (resource) {
                     is Resource.Loading -> _state.value = _state.value.copy(isLoading = true)
                     is Resource.Success -> _state.value = _state.value.copy(

@@ -1,5 +1,6 @@
 package com.modibo.keepguard.data.repository
 
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.modibo.keepguard.core.util.Resource
 import com.modibo.keepguard.data.remote.dto.WarrantyDto
@@ -13,13 +14,15 @@ import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 class WarrantyRepositoryImpl @Inject constructor(
-    private val firestore: FirebaseFirestore
+    private val auth: FirebaseAuth,
+    private val firestore: FirebaseFirestore,
 ) : WarrantyRepository {
     override fun addWarranty(warranty: Warranty): Flow<Resource<Unit>> = flow {
         emit(Resource.Loading())
         try {
+            val userId = auth.currentUser?.uid ?: throw Exception("Non connecté")
             firestore.collection("warranties")
-                .add(warranty.toDto())
+                .add(warranty.toDto().copy(userId = userId))
                 .await()
             emit(Resource.Success(Unit))
         } catch (e: Exception) {
@@ -63,9 +66,10 @@ class WarrantyRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun getWarrantiesByUser(userId: String): Flow<Resource<List<Warranty>>> = flow {
+    override fun getWarrantiesByUser(): Flow<Resource<List<Warranty>>> = flow {
         emit(Resource.Loading())
         try {
+            val userId = auth.currentUser?.uid ?: throw Exception("Non connecté")
             val snapshot = firestore.collection("warranties")
                 .whereEqualTo("userId", userId)
                 .get()

@@ -22,17 +22,14 @@ data class AssetDetailState(
 
 @HiltViewModel
 class AssetDetailViewModel @Inject constructor(
-    private val getAssetByIdUseCase: GetAssetByIdUseCase,
-    private val deleteAssetUseCase: DeleteAssetUseCase,
-    private val savedStateHandle: SavedStateHandle,
+    private val getAssetById: GetAssetByIdUseCase,
+    private val deleteAsset: DeleteAssetUseCase,
+    savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
     private val assetId: String = savedStateHandle.get<String>("assetId") ?: ""
 
     private val _state = MutableStateFlow(AssetDetailState())
     val state: StateFlow<AssetDetailState> = _state
-
-
-
 
     init {
         loadAsset()
@@ -40,7 +37,7 @@ class AssetDetailViewModel @Inject constructor(
 
     fun loadAsset() {
         viewModelScope.launch {
-            getAssetByIdUseCase(assetId).collect { resource ->
+            getAssetById(assetId).collect { resource ->
                 when (resource) {
                     is Resource.Loading -> _state.value = _state.value.copy(isLoading = true)
                     is Resource.Success -> _state.value = _state.value.copy(asset = resource.data, isLoading = false)
@@ -52,7 +49,7 @@ class AssetDetailViewModel @Inject constructor(
 
     fun deleteAsset() {
         viewModelScope.launch {
-            deleteAssetUseCase(assetId).collect { resource ->
+            deleteAsset(assetId).collect { resource ->
                 when (resource) {
                     is Resource.Loading -> _state.value = _state.value.copy(isLoading = true)
                     is Resource.Success -> _state.value = _state.value.copy(isDeleted = true, isLoading = false)

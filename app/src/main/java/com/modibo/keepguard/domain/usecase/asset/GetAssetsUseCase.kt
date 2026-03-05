@@ -6,5 +6,5 @@ import javax.inject.Inject
 class GetAssetsUseCase @Inject constructor(
     private val repository: AssetRepository
 ) {
-    operator fun invoke(userId: String) = repository.getAssets(userId)
+    operator fun invoke() = repository.getAssets()
 }

@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import com.modibo.keepguard.core.util.Resource
 import com.modibo.keepguard.domain.model.Warranty
 import com.modibo.keepguard.domain.model.WarrantyType
-import com.modibo.keepguard.domain.usecase.auth.GetCurrentUserUseCase
 import com.modibo.keepguard.domain.usecase.warranty.AddWarrantyUseCase
 import com.modibo.keepguard.domain.usecase.warranty.GetWarrantyByIdUseCase
 import com.modibo.keepguard.domain.usecase.warranty.UpdateWarrantyUseCase
@@ -30,11 +29,10 @@ data class WarrantyFormState(
 
 @HiltViewModel
 class WarrantyFormViewModel @Inject constructor(
-    private val addWarrantyUseCase: AddWarrantyUseCase,
-    private val updateWarrantyUseCase: UpdateWarrantyUseCase,
-    private val getWarrantyByIdUseCase: GetWarrantyByIdUseCase,
-    private val getCurrentUserUseCase: GetCurrentUserUseCase,
-    private val savedStateHandle: SavedStateHandle
+    private val addWarranty: AddWarrantyUseCase,
+    private val updateWarranty: UpdateWarrantyUseCase,
+    private val getWarrantyById: GetWarrantyByIdUseCase,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
     private var assetId: String = savedStateHandle.get<String>("assetId") ?: ""
     private val warrantyId: String = savedStateHandle.get<String>("warrantyId") ?: ""
@@ -62,7 +60,6 @@ class WarrantyFormViewModel @Inject constructor(
     }
 
     fun saveWarranty() {
-        val userId = getCurrentUserUseCase()?.id ?: return
         val startDate = _state.value.startDate ?: return
         val months = _state.value.durationMonths.toIntOrNull() ?: return
         val endDate = calculateEndDate(startDate, months)
@@ -70,7 +67,6 @@ class WarrantyFormViewModel @Inject constructor(
         val warranty = Warranty(
             id = warrantyId,
             assetId = assetId,
-            userId = userId,
             type = _state.value.type,
             startDate = startDate,
             durationMonths = months,
@@ -80,7 +76,7 @@ class WarrantyFormViewModel @Inject constructor(
             createdAt = System.currentTimeMillis()
         )
         viewModelScope.launch {
-            val flow = if (warrantyId.isNotEmpty()) updateWarrantyUseCase(warranty) else addWarrantyUseCase(warranty)
+            val flow = if (warrantyId.isNotEmpty()) updateWarranty(warranty) else addWarranty(warranty)
             flow.collect { resource ->
                 when (resource) {
                     is Resource.Loading -> _state.value = _state.value.copy(isLoading = true)
@@ -93,7 +89,7 @@ class WarrantyFormViewModel @Inject constructor(
 
     private fun loadWarranty() {
         viewModelScope.launch {
-            getWarrantyByIdUseCase(warrantyId).collect { resource ->
+            getWarrantyById(warrantyId).collect { resource ->
                 when (resource) {
                     is Resource.Loading -> _state.value = _state.value.copy(isLoading = true)
                     is Resource.Success -> {

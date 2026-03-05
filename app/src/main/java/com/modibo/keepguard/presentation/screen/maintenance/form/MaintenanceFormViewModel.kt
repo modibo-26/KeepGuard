@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import com.modibo.keepguard.core.util.Resource
 import com.modibo.keepguard.domain.model.Maintenance
 import com.modibo.keepguard.domain.model.MaintenanceType
-import com.modibo.keepguard.domain.usecase.auth.GetCurrentUserUseCase
 import com.modibo.keepguard.domain.usecase.maintenance.AddMaintenanceUseCase
 import com.modibo.keepguard.domain.usecase.maintenance.GetMaintenanceByIdUseCase
 import com.modibo.keepguard.domain.usecase.maintenance.UpdateMaintenanceUseCase
@@ -33,11 +32,10 @@ data class MaintenanceFormState(
 
 @HiltViewModel
 class MaintenanceFormViewModel @Inject constructor(
-    private val addMaintenanceUseCase: AddMaintenanceUseCase,
-    private val updateMaintenanceUseCase: UpdateMaintenanceUseCase,
-    private val getMaintenanceByIdUseCase: GetMaintenanceByIdUseCase,
-    private val getCurrentUserUseCase: GetCurrentUserUseCase,
-    private val savedStateHandle: SavedStateHandle
+    private val addMaintenance: AddMaintenanceUseCase,
+    private val updateMaintenance: UpdateMaintenanceUseCase,
+    private val getMaintenanceById: GetMaintenanceByIdUseCase,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
     private var assetId: String = savedStateHandle.get<String>("assetId") ?: ""
     private val maintenanceId: String = savedStateHandle.get<String>("maintenanceId") ?: ""
@@ -62,13 +60,11 @@ class MaintenanceFormViewModel @Inject constructor(
     fun onRecurrenceChange(value: String) { _state.value = _state.value.copy(recurrenceMonths = value) }
 
     fun saveMaintenance() {
-        val userId = getCurrentUserUseCase()?.id ?: return
         val date = _state.value.date ?: return
 
         val maintenance = Maintenance(
             id = maintenanceId,
             assetId = assetId,
-            userId = userId,
             title = _state.value.title,
             description = _state.value.description,
             type = _state.value.type,
@@ -81,7 +77,7 @@ class MaintenanceFormViewModel @Inject constructor(
             createdAt = System.currentTimeMillis()
         )
         viewModelScope.launch {
-            val flow = if (maintenanceId.isNotEmpty()) updateMaintenanceUseCase(maintenance) else addMaintenanceUseCase(maintenance)
+            val flow = if (maintenanceId.isNotEmpty()) updateMaintenance(maintenance) else addMaintenance(maintenance)
             flow.collect { resource ->
                 when (resource) {
                     is Resource.Loading -> _state.value = _state.value.copy(isLoading = true)
@@ -94,7 +90,7 @@ class MaintenanceFormViewModel @Inject constructor(
 
     private fun loadMaintenance() {
         viewModelScope.launch {
-            getMaintenanceByIdUseCase(maintenanceId).collect { resource ->
+            getMaintenanceById(maintenanceId).collect { resource ->
                 when (resource) {
                     is Resource.Loading -> _state.value = _state.value.copy(isLoading = true)
                     is Resource.Success -> {

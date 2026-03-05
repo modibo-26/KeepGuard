@@ -14,18 +14,18 @@ import kotlinx.coroutines.flow.launchIn
 
 @HiltViewModel
 class SplashViewModel @Inject constructor(
-    private val signInAnonymouslyUseCase: SignInAnonymouslyUseCase,
-    private val getCurrentUserUseCase: GetCurrentUserUseCase
+    private val signInAnonymously: SignInAnonymouslyUseCase,
+    private val getCurrentUser: GetCurrentUserUseCase
 ) : ViewModel() {
     private val _isReady = MutableStateFlow(false)
     val isReady: StateFlow<Boolean> = _isReady
 
     init {
-        val currentUser = getCurrentUserUseCase()
+        val currentUser = getCurrentUser()
         if (currentUser != null) {
             _isReady.value = true
         } else {
-            signInAnonymouslyUseCase().onEach { result ->
+            signInAnonymously().onEach { result ->
                 when(result) {
                     is Resource.Success -> _isReady.value = true
                     is Resource.Error -> _isReady.value = false

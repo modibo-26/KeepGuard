@@ -11,11 +11,15 @@ import com.modibo.keepguard.presentation.screen.home.HomeScreen
 import com.modibo.keepguard.presentation.screen.assets.detail.AssetDetailScreen
 import com.modibo.keepguard.presentation.screen.assets.form.AssetFormScreen
 import com.modibo.keepguard.presentation.screen.assets.list.AssetListScreen
+import com.modibo.keepguard.presentation.screen.document.detail.DocumentDetailScreen
+import com.modibo.keepguard.presentation.screen.document.form.DocumentFormScreen
+import com.modibo.keepguard.presentation.screen.document.list.DocumentListScreen
 import com.modibo.keepguard.presentation.screen.maintenance.detail.MaintenanceDetailScreen
 import com.modibo.keepguard.presentation.screen.maintenance.form.MaintenanceFormScreen
 import com.modibo.keepguard.presentation.screen.maintenance.list.MaintenanceListScreen
 import com.modibo.keepguard.presentation.screen.warranty.detail.WarrantyDetailScreen
 import com.modibo.keepguard.presentation.screen.warranty.form.WarrantyFormScreen
+import com.modibo.keepguard.presentation.screen.settings.SettingsScreen
 import com.modibo.keepguard.presentation.screen.warranty.list.WarrantyListScreen
 
 @Composable
@@ -38,7 +42,9 @@ fun NavGraph(navHostController: NavHostController) {
             )
         }
         composable(Screen.Scanner.route) { Text("Scanner - bientôt disponible") }
-        composable(Screen.Settings.route) { Text("Settings") }
+        composable(Screen.Settings.route) {
+            SettingsScreen()
+        }
         composable(
             "asset_detail/{assetId}",
             arguments = listOf(navArgument("assetId") { type = NavType.StringType })
@@ -49,6 +55,7 @@ fun NavGraph(navHostController: NavHostController) {
                 onDelete = { navHostController.popBackStack() },
                 onWarranties = { assetId -> navHostController.navigate("warranty_list/$assetId") },
                 onMaintenances = { assetId -> navHostController.navigate("maintenance_list/$assetId") },
+                onDocuments =  { assetId -> navHostController.navigate("document_list/$assetId") }
             )
         }
         composable(
@@ -141,6 +148,39 @@ fun NavGraph(navHostController: NavHostController) {
             )
         ) {
             MaintenanceFormScreen(
+                onSaved = { navHostController.popBackStack() },
+                onBack = { navHostController.popBackStack() }
+            )
+        }
+        composable(
+            "document_list/{assetId}",
+            arguments = listOf(navArgument("assetId") { type = NavType.StringType })
+        ) {
+            DocumentListScreen(
+                onDocumentClick = { documentId -> navHostController.navigate("document_detail/$documentId") },
+                onAddClick = {
+                    val assetId = it.arguments?.getString("assetId") ?: ""
+                    navHostController.navigate("document_form/$assetId")
+                },
+                onBack = { navHostController.popBackStack() }
+            )
+        }
+        composable(
+            "document_detail/{documentId}",
+            arguments = listOf(navArgument("documentId") { type = NavType.StringType })
+        ) {
+            DocumentDetailScreen(
+                onBack = { navHostController.popBackStack() },
+                onDelete = { navHostController.popBackStack() }
+            )
+        }
+        composable(
+            "document_form/{assetId}",
+            arguments = listOf(
+                navArgument("assetId") { type = NavType.StringType },
+            )
+        ) {
+            DocumentFormScreen(
                 onSaved = { navHostController.popBackStack() },
                 onBack = { navHostController.popBackStack() }
             )
