@@ -1,5 +1,6 @@
 package com.modibo.keepguard.data.repository
 
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.modibo.keepguard.core.util.Resource
 import com.modibo.keepguard.data.remote.dto.AssetDto
@@ -13,11 +14,13 @@ import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 class AssetRepositoryImpl @Inject constructor(
+    private val auth: FirebaseAuth,
     private val firestore: FirebaseFirestore
 ) : AssetRepository{
-    override fun getAssets(userId: String): Flow<Resource<List<Asset>>> = flow {
+    override fun getAssets(): Flow<Resource<List<Asset>>> = flow {
         emit(Resource.Loading())
         try {
+            val userId = auth.currentUser?.uid ?: throw Exception("Non connecté")
             val snapshot = firestore.collection("assets")
                 .whereEqualTo("userId", userId)
                 .get()
@@ -54,8 +57,9 @@ class AssetRepositoryImpl @Inject constructor(
     override fun addAsset(asset: Asset): Flow<Resource<Unit>> = flow {
         emit(Resource.Loading())
         try {
+            val userId = auth.currentUser?.uid ?: throw Exception("Non connecté")
             firestore.collection("assets")
-                .add(asset.toDto())
+                .add(asset.toDto().copy(userId = userId))
                 .await()
             emit(Resource.Success(Unit))
         } catch (e: Exception) {

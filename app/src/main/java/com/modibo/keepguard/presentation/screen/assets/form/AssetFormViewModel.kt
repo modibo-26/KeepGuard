@@ -9,7 +9,6 @@ import com.modibo.keepguard.domain.model.AssetCategory
 import com.modibo.keepguard.domain.usecase.asset.AddAssetUseCase
 import com.modibo.keepguard.domain.usecase.asset.GetAssetByIdUseCase
 import com.modibo.keepguard.domain.usecase.asset.UpdateAssetUseCase
-import com.modibo.keepguard.domain.usecase.auth.GetCurrentUserUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -31,22 +30,13 @@ data class AssetFormState(
 
 @HiltViewModel
 class AssetFormViewModel @Inject constructor(
-    private val addAssetUseCase: AddAssetUseCase,
-    private val getAssetByIdUseCase: GetAssetByIdUseCase,
-    private val getCurrentUserUseCase: GetCurrentUserUseCase,
-    private val updateAssetUseCase: UpdateAssetUseCase,
-    private val savedStateHandle: SavedStateHandle,
+    private val addAsset: AddAssetUseCase,
+    private val getAssetById: GetAssetByIdUseCase,
+    private val updateAsset: UpdateAssetUseCase,
+    savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
     private val _state = MutableStateFlow(AssetFormState())
     val state: StateFlow<AssetFormState> = _state
-
-    fun onNameChange(value: String) { _state.value = _state.value.copy(name = value) }
-    fun onDescriptionChange(value: String) { _state.value = _state.value.copy(description = value) }
-    fun onCategoryChange(category: AssetCategory) { _state.value = _state.value.copy(category = category) }
-    fun onBrandChange(value: String) { _state.value = _state.value.copy(brand = value) }
-    fun onModelChange(value: String) { _state.value = _state.value.copy(model = value) }
-    fun onSerialNumberChange(value: String) { _state.value = _state.value.copy(serialNumber = value) }
-    fun onPurchasePlaceChange(value: String) { _state.value = _state.value.copy(purchasePlace = value) }
 
     private val assetId: String = savedStateHandle.get<String>("assetId") ?: ""
 
@@ -56,11 +46,17 @@ class AssetFormViewModel @Inject constructor(
         }
     }
 
+    fun onNameChange(value: String) { _state.value = _state.value.copy(name = value) }
+    fun onDescriptionChange(value: String) { _state.value = _state.value.copy(description = value) }
+    fun onCategoryChange(category: AssetCategory) { _state.value = _state.value.copy(category = category) }
+    fun onBrandChange(value: String) { _state.value = _state.value.copy(brand = value) }
+    fun onModelChange(value: String) { _state.value = _state.value.copy(model = value) }
+    fun onSerialNumberChange(value: String) { _state.value = _state.value.copy(serialNumber = value) }
+    fun onPurchasePlaceChange(value: String) { _state.value = _state.value.copy(purchasePlace = value) }
+
     fun saveAsset() {
-        val userId = getCurrentUserUseCase()?.id ?: return
         val asset = Asset(
             id = assetId,
-            userId = userId,
             name = _state.value.name,
             description = _state.value.description,
             category = _state.value.category,
@@ -72,7 +68,7 @@ class AssetFormViewModel @Inject constructor(
             updatedAt = System.currentTimeMillis()
         )
         viewModelScope.launch {
-            val flow = if (assetId.isNotEmpty()) updateAssetUseCase(asset) else addAssetUseCase(asset)
+            val flow = if (assetId.isNotEmpty()) updateAsset(asset) else addAsset(asset)
             flow.collect { resource ->
                 when (resource) {
                     is Resource.Loading -> _state.value = _state.value.copy(isLoading = true)
@@ -84,7 +80,7 @@ class AssetFormViewModel @Inject constructor(
     }
     fun loadAsset() {
         viewModelScope.launch {
-            getAssetByIdUseCase(assetId).collect { resource ->
+            getAssetById(assetId).collect { resource ->
                 when (resource) {
                     is Resource.Loading -> _state.value = _state.value.copy(isLoading = true)
                     is Resource.Success -> {
