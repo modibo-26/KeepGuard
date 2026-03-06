@@ -17,6 +17,7 @@ import com.modibo.keepguard.presentation.screen.document.list.DocumentListScreen
 import com.modibo.keepguard.presentation.screen.maintenance.detail.MaintenanceDetailScreen
 import com.modibo.keepguard.presentation.screen.maintenance.form.MaintenanceFormScreen
 import com.modibo.keepguard.presentation.screen.maintenance.list.MaintenanceListScreen
+import com.modibo.keepguard.presentation.screen.scanner.ScannerScreen
 import com.modibo.keepguard.presentation.screen.warranty.detail.WarrantyDetailScreen
 import com.modibo.keepguard.presentation.screen.warranty.form.WarrantyFormScreen
 import com.modibo.keepguard.presentation.screen.settings.SettingsScreen
@@ -41,7 +42,9 @@ fun NavGraph(navHostController: NavHostController) {
                 onAddClick = { navHostController.navigate("asset_form") }
             )
         }
-        composable(Screen.Scanner.route) { Text("Scanner - bientôt disponible") }
+        composable(Screen.Scanner.route) {
+            ScannerScreen()
+        }
         composable(Screen.Settings.route) {
             SettingsScreen()
         }

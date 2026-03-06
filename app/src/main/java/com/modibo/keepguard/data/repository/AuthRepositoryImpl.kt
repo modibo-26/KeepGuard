@@ -22,7 +22,7 @@ import javax.inject.Inject
 
 class AuthRepositoryImpl @Inject constructor(
     private val auth: FirebaseAuth,
-    @ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context
 ) : AuthRepository {
     override fun signInAnonymously(): Flow<Resource<User>> = flow {
         emit(Resource.Loading())
