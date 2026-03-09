@@ -41,4 +41,8 @@ class ScannerViewModel @Inject constructor(
             }
     }
 
+    fun resetScan() {
+        _state.value = _state.value.copy(capturedImageUri = null, ocrText = null)
+    }
+
 }

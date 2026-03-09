@@ -13,20 +13,27 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -36,10 +43,12 @@ import com.modibo.keepguard.domain.model.DocumentType
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 fun DocumentFormScreen(
     viewModel: DocumentFormViewModel = hiltViewModel(),
-    onSaved: () -> Unit,
+    onSaved: (String) -> Unit,
     onBack: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
+
+    var expanded by remember { mutableStateOf(false) }
 
     val filePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -49,7 +58,7 @@ fun DocumentFormScreen(
 
     if (state.isSaved) {
         LaunchedEffect(Unit) {
-            onSaved()
+            onSaved(state.assetId)
         }
         return
     }
@@ -71,6 +80,27 @@ fun DocumentFormScreen(
                 .padding(padding)
                 .padding(16.dp)
         ) {
+            if (state.fromScanner) {
+                ExposedDropdownMenuBox(expanded, {expanded = it}) {
+                    TextField(
+                        value = state.assets.find { it.id == state.assetId }?.name ?: "Sélectionnez un bien" ,
+                        onValueChange = { },
+                        readOnly = true,
+                        modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
+                    )
+                    ExposedDropdownMenu(expanded, { expanded = false }) {
+                        state.assets.forEach { asset ->
+                            DropdownMenuItem(
+                                text = { Text(asset.name) },
+                                onClick = {
+                                    viewModel.onAssetSelected(asset.id)
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
             OutlinedTextField(
                 value = state.name,
                 onValueChange = { viewModel.onNameChange(it) },
@@ -90,17 +120,19 @@ fun DocumentFormScreen(
                 }
             }
             Spacer(Modifier.height(16.dp))
-            OutlinedButton(
-                onClick = { filePicker.launch("*/*") },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(if (state.fileUri != null) "Fichier sélectionné" else "Choisir un fichier")
+            if (!state.fromScanner) {
+                OutlinedButton(
+                    onClick = { filePicker.launch("*/*") },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(if (state.fileUri != null) "Fichier sélectionné" else "Choisir un fichier")
+                }
             }
             Spacer(Modifier.height(24.dp))
             Button(
                 onClick = { viewModel.saveDocument() },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = state.name.isNotBlank() && state.fileUri != null && !state.isLoading
+                enabled = state.name.isNotBlank() && state.fileUri != null && !state.isLoading && (state.assets.isEmpty() || state.assetId.isNotEmpty())
             ) {
                 if (state.isLoading) {
                     CircularProgressIndicator()

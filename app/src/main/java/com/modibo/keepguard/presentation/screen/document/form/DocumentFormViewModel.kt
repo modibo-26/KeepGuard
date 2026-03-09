@@ -13,6 +13,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import androidx.core.net.toUri
+import com.modibo.keepguard.domain.model.Asset
+import com.modibo.keepguard.domain.usecase.asset.GetAssetsUseCase
 
 data class DocumentFormState(
     val fileUri: Uri? = null,
@@ -21,26 +24,46 @@ data class DocumentFormState(
     val error: String? = null,
     val isSaved: Boolean = false,
     val name: String = "",
-    val type: DocumentType = DocumentType.OTHER
+    val type: DocumentType = DocumentType.OTHER,
+    val assets: List<Asset> = emptyList(),
+    val fromScanner: Boolean = false
 )
 
 @HiltViewModel
 class DocumentFormViewModel @Inject constructor(
     private val addDocument: AddDocumentUseCase,
-    savedStateHandle: SavedStateHandle
+    private val getAssets: GetAssetsUseCase,
+    savedStateHandle: SavedStateHandle,
 ): ViewModel() {
     private val assetId: String = savedStateHandle.get<String>("assetId") ?: ""
+    private val imageUri: String = savedStateHandle.get<String>("imageUri") ?: ""
+    private val ocrText: String = savedStateHandle.get<String>("ocrText") ?: ""
+
+    private val uri = Uri.decode(imageUri)
+    private val ocr = Uri.decode(ocrText)
 
     private val _state = MutableStateFlow(DocumentFormState())
     val state: StateFlow<DocumentFormState> = _state
 
+    init {
+        _state.value = _state.value.copy(
+            fileUri = if (uri.isNotEmpty()) uri.toUri() else null,
+            fromScanner = uri.isNotEmpty(),
+            assetId = assetId,
+        )
+        if (assetId.isEmpty()) {
+            loadAssets()
+        }
+    }
+
     fun onFileSelected(uri: Uri) { _state.value = _state.value.copy(fileUri = uri) }
     fun onNameChange(name: String) {_state.value = _state.value.copy(name = name)}
     fun onTypeChange(type: DocumentType) { _state.value = _state.value.copy(type = type) }
+    fun onAssetSelected(assetId: String) {_state.value = _state.value.copy(assetId = assetId)}
 
     fun saveDocument() {
         val document = Document(
-            assetId = assetId,
+            assetId = state.value.assetId,
             name = state.value.name,
             type = state.value.type
         )
@@ -56,4 +79,13 @@ class DocumentFormViewModel @Inject constructor(
         }
     }
 
+    fun loadAssets() {
+        viewModelScope.launch {
+            getAssets().collect { resource ->
+                if (resource is Resource.Success) {
+                    _state.value = _state.value.copy(assets = resource.data ?: emptyList())
+                }
+            }
+        }
+    }
 }
