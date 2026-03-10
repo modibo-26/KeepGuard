@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">KeepGuard</string>
+    <string name="reminder_channel_name">Rappels KeepGuard</string>
 </resources>

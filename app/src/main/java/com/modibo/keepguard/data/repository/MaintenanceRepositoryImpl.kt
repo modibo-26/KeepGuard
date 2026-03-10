@@ -17,14 +17,14 @@ class MaintenanceRepositoryImpl @Inject constructor(
     private val firestore: FirebaseFirestore,
     private val auth: FirebaseAuth,
 ): MaintenanceRepository {
-    override fun addMaintenance(maintenance: Maintenance): Flow<Resource<Unit>> = flow {
+    override fun addMaintenance(maintenance: Maintenance): Flow<Resource<Maintenance>> = flow {
         emit(Resource.Loading())
         try {
             val userId = auth.currentUser?.uid ?: throw Exception("Non connecté")
-            firestore.collection("maintenances")
+            val docRef = firestore.collection("maintenances")
                 .add(maintenance.toDto().copy(userId = userId))
                 .await()
-            emit(Resource.Success(Unit))
+            emit(Resource.Success(maintenance.copy(id = docRef.id)))
         } catch (e: Exception) {
             emit(Resource.Error(e.message ?: "Erreur d'ajout de la maintenance"))
         }
@@ -83,14 +83,14 @@ class MaintenanceRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun updateMaintenance(maintenance: Maintenance): Flow<Resource<Unit>> = flow {
+    override fun updateMaintenance(maintenance: Maintenance): Flow<Resource<Maintenance>> = flow {
         emit(Resource.Loading())
         try {
             firestore.collection("maintenances")
                 .document(maintenance.id)
                 .set(maintenance.toDto())
                 .await()
-            emit(Resource.Success(Unit))
+            emit(Resource.Success(maintenance))
         } catch (e: Exception) {
             emit(Resource.Error(e.message ?: "Erreur dans la modification"))
         }

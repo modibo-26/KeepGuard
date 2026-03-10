@@ -3,7 +3,9 @@ package com.modibo.keepguard.presentation.screen.maintenance.form
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.modibo.keepguard.core.util.Constants
 import com.modibo.keepguard.core.util.Resource
+import com.modibo.keepguard.data.worker.ReminderScheduler
 import com.modibo.keepguard.domain.model.Maintenance
 import com.modibo.keepguard.domain.model.MaintenanceType
 import com.modibo.keepguard.domain.usecase.maintenance.AddMaintenanceUseCase
@@ -35,6 +37,7 @@ class MaintenanceFormViewModel @Inject constructor(
     private val addMaintenance: AddMaintenanceUseCase,
     private val updateMaintenance: UpdateMaintenanceUseCase,
     private val getMaintenanceById: GetMaintenanceByIdUseCase,
+    private val scheduler: ReminderScheduler,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
     private var assetId: String = savedStateHandle.get<String>("assetId") ?: ""
@@ -81,7 +84,15 @@ class MaintenanceFormViewModel @Inject constructor(
             flow.collect { resource ->
                 when (resource) {
                     is Resource.Loading -> _state.value = _state.value.copy(isLoading = true)
-                    is Resource.Success -> _state.value = _state.value.copy(isSaved = true, isLoading = false)
+                    is Resource.Success -> {
+                        _state.value = _state.value.copy(isSaved = true, isLoading = false)
+                        scheduler.schedule(
+                            resource.data!!.id,
+                            "Maintenance à faire bientot",
+                            "La date de votre entretien approche !",
+                            date - Constants.REMINDER_OFFSET_MILLIS
+                        )
+                    }
                     is Resource.Error -> _state.value = _state.value.copy(error = resource.message, isLoading = false)
                 }
             }

@@ -3,7 +3,9 @@ package com.modibo.keepguard.presentation.screen.warranty.form
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.modibo.keepguard.core.util.Constants
 import com.modibo.keepguard.core.util.Resource
+import com.modibo.keepguard.data.worker.ReminderScheduler
 import com.modibo.keepguard.domain.model.Warranty
 import com.modibo.keepguard.domain.model.WarrantyType
 import com.modibo.keepguard.domain.usecase.warranty.AddWarrantyUseCase
@@ -32,6 +34,7 @@ class WarrantyFormViewModel @Inject constructor(
     private val addWarranty: AddWarrantyUseCase,
     private val updateWarranty: UpdateWarrantyUseCase,
     private val getWarrantyById: GetWarrantyByIdUseCase,
+    private val scheduler: ReminderScheduler,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
     private var assetId: String = savedStateHandle.get<String>("assetId") ?: ""
@@ -80,7 +83,14 @@ class WarrantyFormViewModel @Inject constructor(
             flow.collect { resource ->
                 when (resource) {
                     is Resource.Loading -> _state.value = _state.value.copy(isLoading = true)
-                    is Resource.Success -> _state.value = _state.value.copy(isSaved = true, isLoading = false)
+                    is Resource.Success -> { _state.value = _state.value.copy(isSaved = true, isLoading = false)
+                        scheduler.schedule(
+                            resource.data!!.id,
+                            "Garantie Expirante",
+                            "Votre garantie expire bientot",
+                            endDate - Constants.REMINDER_OFFSET_MILLIS
+                        )
+                    }
                     is Resource.Error -> _state.value = _state.value.copy(error = resource.message, isLoading = false)
                 }
             }

@@ -17,14 +17,14 @@ class WarrantyRepositoryImpl @Inject constructor(
     private val auth: FirebaseAuth,
     private val firestore: FirebaseFirestore,
 ) : WarrantyRepository {
-    override fun addWarranty(warranty: Warranty): Flow<Resource<Unit>> = flow {
+    override fun addWarranty(warranty: Warranty): Flow<Resource<Warranty>> = flow {
         emit(Resource.Loading())
         try {
             val userId = auth.currentUser?.uid ?: throw Exception("Non connecté")
-            firestore.collection("warranties")
+            val docRef = firestore.collection("warranties")
                 .add(warranty.toDto().copy(userId = userId))
                 .await()
-            emit(Resource.Success(Unit))
+            emit(Resource.Success(warranty.copy(id = docRef.id)))
         } catch (e: Exception) {
             emit(Resource.Error(e.message ?: "Erreur d'ajout de la garantie"))
         }
@@ -83,14 +83,14 @@ class WarrantyRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun updateWarranty(warranty: Warranty): Flow<Resource<Unit>> = flow {
+    override fun updateWarranty(warranty: Warranty): Flow<Resource<Warranty>> = flow {
         emit(Resource.Loading())
         try {
             firestore.collection("warranties")
                 .document(warranty.id)
                 .set(warranty.toDto())
                 .await()
-            emit(Resource.Success(Unit))
+            emit(Resource.Success(warranty))
         } catch (e: Exception) {
             emit(Resource.Error(e.message ?: "Erreur dans la modification"))
         }
