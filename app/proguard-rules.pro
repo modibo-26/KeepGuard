@@ -19,3 +19,10 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Firebase
+-keep class com.modibo.keepguard.data.remote.dto.** { *; }
+
+# Keep line numbers for crash reports
+-keepattributes SourceFile,LineNumberTable
+-keepattributes *Annotation*

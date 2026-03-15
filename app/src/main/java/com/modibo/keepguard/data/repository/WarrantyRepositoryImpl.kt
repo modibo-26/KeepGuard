@@ -86,9 +86,10 @@ class WarrantyRepositoryImpl @Inject constructor(
     override fun updateWarranty(warranty: Warranty): Flow<Resource<Warranty>> = flow {
         emit(Resource.Loading())
         try {
+            val userId = auth.currentUser?.uid ?: throw Exception("Non connecté")
             firestore.collection("warranties")
                 .document(warranty.id)
-                .set(warranty.toDto())
+                .set(warranty.toDto().copy(userId = userId))
                 .await()
             emit(Resource.Success(warranty))
         } catch (e: Exception) {

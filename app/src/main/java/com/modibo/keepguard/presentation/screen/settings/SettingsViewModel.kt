@@ -85,10 +85,6 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun signOut() {
-        repository.signOut()
-    }
-
     fun clearAuthSuccess() { _state.value = _state.value.copy(authSuccess = false) }
 
     fun clearError() {

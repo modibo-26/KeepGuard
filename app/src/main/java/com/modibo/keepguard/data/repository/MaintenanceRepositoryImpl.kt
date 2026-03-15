@@ -86,9 +86,10 @@ class MaintenanceRepositoryImpl @Inject constructor(
     override fun updateMaintenance(maintenance: Maintenance): Flow<Resource<Maintenance>> = flow {
         emit(Resource.Loading())
         try {
+            val userId = auth.currentUser?.uid ?: throw Exception("Non connecté")
             firestore.collection("maintenances")
                 .document(maintenance.id)
-                .set(maintenance.toDto())
+                .set(maintenance.toDto().copy(userId = userId))
                 .await()
             emit(Resource.Success(maintenance))
         } catch (e: Exception) {

@@ -37,7 +37,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-//    onSignOut: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -155,21 +154,6 @@ fun SettingsScreen(
 
             Spacer(Modifier.height(32.dp))
 
-            // Déconnexion
-//            Button(
-//                onClick = {
-//                    viewModel.signOut()
-//                    onSignOut()
-//                },
-//                colors = ButtonDefaults.buttonColors(
-//                    containerColor = MaterialTheme.colorScheme.error
-//                ),
-//                modifier = Modifier.fillMaxWidth()
-//            ) {
-//                Icon(Icons.Default.Logout, contentDescription = null)
-//                Spacer(Modifier.padding(4.dp))
-//                Text("Se déconnecter")
-//            }
         }
     }
 }

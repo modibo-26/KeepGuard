@@ -13,9 +13,17 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -28,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -91,18 +100,23 @@ fun ScannerScreen(
                 CircularProgressIndicator()
             }
             if(ocrText != null && uri != null) {
-                Column(Modifier.align(Alignment.BottomCenter)) {
-                    Button({
-                        onCreateDocument(uri, ocrText)
-                    }) {
+                Column(
+                    Modifier.align(Alignment.BottomCenter).padding(bottom = 32.dp)
+                ) {
+                    Button(
+                        {
+                            onCreateDocument(uri, ocrText)
+                        },
+                    ) {
                         Text("Enregistrer le document")
                     }
-                    Button({ viewModel.resetScan() }) {
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedButton({ viewModel.resetScan() }) {
                         Text("Reprendre la photo")
                     }
                 }
             } else {
-                Button(
+                FloatingActionButton(
                     {
                         val file = File.createTempFile("scan", ".jpg", context.cacheDir)
                         val outputOptions = ImageCapture.OutputFileOptions.Builder(file).build()
@@ -121,7 +135,7 @@ fun ScannerScreen(
                         )
                     },
                     Modifier.align(Alignment.BottomCenter)
-                ) { Text("Scanner") }
+                ) { Icon(Icons.Default.CameraAlt, contentDescription = "Scanner") }
             }
         }
     } else {

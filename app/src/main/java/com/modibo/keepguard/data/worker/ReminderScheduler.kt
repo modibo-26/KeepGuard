@@ -11,7 +11,6 @@ class ReminderScheduler @Inject constructor(
 ) {
 
     fun schedule(id: String, title: String, message: String, triggerAtMillis: Long) {
-
         val delay = triggerAtMillis -  System.currentTimeMillis()
 //        Delay de test des notification (10 sec)
 //        val delay = 10_000L

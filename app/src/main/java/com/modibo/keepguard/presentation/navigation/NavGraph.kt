@@ -75,7 +75,8 @@ fun NavGraph(navHostController: NavHostController) {
             })
         ) {
             AssetFormScreen(
-                onSaved = { navHostController.popBackStack() }
+                onSaved = { navHostController.popBackStack() },
+                onBack = { navHostController.popBackStack() }
             )
         }
         composable(
