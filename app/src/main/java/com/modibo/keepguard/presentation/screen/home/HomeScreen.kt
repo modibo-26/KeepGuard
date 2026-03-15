@@ -1,5 +1,9 @@
 package com.modibo.keepguard.presentation.screen.home
 
+import android.Manifest
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,6 +46,8 @@ fun HomeScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.FRANCE)
+
+    NotificationPermission()
 
     LaunchedEffect(Unit) {
         viewModel.loadData()
@@ -205,6 +211,19 @@ fun StatCard(title: String, value: String, modifier: Modifier = Modifier) {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.outline
             )
+        }
+    }
+}
+
+@Composable
+fun NotificationPermission() {
+    val launcher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { }
+
+    LaunchedEffect(Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
     }
 }

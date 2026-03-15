@@ -1,5 +1,6 @@
 package com.modibo.keepguard.presentation.navigation
 
+import android.net.Uri
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
@@ -17,6 +18,7 @@ import com.modibo.keepguard.presentation.screen.document.list.DocumentListScreen
 import com.modibo.keepguard.presentation.screen.maintenance.detail.MaintenanceDetailScreen
 import com.modibo.keepguard.presentation.screen.maintenance.form.MaintenanceFormScreen
 import com.modibo.keepguard.presentation.screen.maintenance.list.MaintenanceListScreen
+import com.modibo.keepguard.presentation.screen.scanner.ScannerScreen
 import com.modibo.keepguard.presentation.screen.warranty.detail.WarrantyDetailScreen
 import com.modibo.keepguard.presentation.screen.warranty.form.WarrantyFormScreen
 import com.modibo.keepguard.presentation.screen.settings.SettingsScreen
@@ -37,29 +39,35 @@ fun NavGraph(navHostController: NavHostController) {
         }
         composable(Screen.AssetList.route) {
             AssetListScreen(
-                onAssetClick = { assetId -> navHostController.navigate("asset_detail/$assetId") },
-                onAddClick = { navHostController.navigate("asset_form") }
+                onAssetClick = { assetId -> navHostController.navigate(Screen.AssetDetail.createRoute(assetId)) },
+                onAddClick = { navHostController.navigate(Screen.AssetForm.createRoute()) }
             )
         }
-        composable(Screen.Scanner.route) { Text("Scanner - bientôt disponible") }
+        composable(Screen.Scanner.route) {
+            ScannerScreen(
+                onCreateDocument = { uri, ocr ->
+                    navHostController.navigate(Screen.DocumentForm.createRoute(null,  Uri.encode(uri.toString()), Uri.encode(ocr)))
+                }
+            )
+        }
         composable(Screen.Settings.route) {
             SettingsScreen()
         }
         composable(
-            "asset_detail/{assetId}",
+            Screen.AssetDetail.route,
             arguments = listOf(navArgument("assetId") { type = NavType.StringType })
         ) {
             AssetDetailScreen(
                 onBack = { navHostController.popBackStack() },
-                onEdit = { assetId -> navHostController.navigate("asset_form?assetId=$assetId") },
+                onEdit = { assetId -> navHostController.navigate(Screen.AssetForm.createRoute(assetId)) },
                 onDelete = { navHostController.popBackStack() },
-                onWarranties = { assetId -> navHostController.navigate("warranty_list/$assetId") },
-                onMaintenances = { assetId -> navHostController.navigate("maintenance_list/$assetId") },
-                onDocuments =  { assetId -> navHostController.navigate("document_list/$assetId") }
+                onWarranties = { assetId -> navHostController.navigate(Screen.WarrantyList.createRoute(assetId)) },
+                onMaintenances = { assetId -> navHostController.navigate(Screen.MaintenanceList.createRoute(assetId)) },
+                onDocuments =  { assetId -> navHostController.navigate(Screen.DocumentList.createRoute(assetId)) }
             )
         }
         composable(
-            "asset_form?assetId={assetId}",
+            Screen.AssetForm.route,
             arguments = listOf(navArgument("assetId") {
                 type = NavType.StringType
                 nullable = true
@@ -67,36 +75,37 @@ fun NavGraph(navHostController: NavHostController) {
             })
         ) {
             AssetFormScreen(
-                onSaved = { navHostController.popBackStack() }
+                onSaved = { navHostController.popBackStack() },
+                onBack = { navHostController.popBackStack() }
             )
         }
         composable(
-            "warranty_list/{assetId}",
+            Screen.WarrantyList.route,
             arguments = listOf(navArgument("assetId") { type = NavType.StringType })
         ) {
             WarrantyListScreen(
-                onWarrantyClick = { warrantyId -> navHostController.navigate("warranty_detail/$warrantyId") },
+                onWarrantyClick = { warrantyId -> navHostController.navigate(Screen.WarrantyDetail.createRoute(warrantyId)) },
                 onAddClick = {
                     val assetId = it.arguments?.getString("assetId") ?: ""
-                    navHostController.navigate("warranty_form/$assetId")
+                    navHostController.navigate(Screen.WarrantyForm.createRoute(assetId))
                 },
                 onBack = { navHostController.popBackStack() }
             )
         }
         composable(
-            "warranty_detail/{warrantyId}",
+            Screen.WarrantyDetail.route,
             arguments = listOf(navArgument("warrantyId") { type = NavType.StringType })
         ) {
             WarrantyDetailScreen(
                 onBack = { navHostController.popBackStack() },
-                onEdit = { warrantyId, assetId ->
-                    navHostController.navigate("warranty_form/$assetId?warrantyId=$warrantyId")
+                onEdit = { assetId, warrantyId ->
+                    navHostController.navigate(Screen.WarrantyForm.createRoute(assetId, warrantyId))
                 },
                 onDelete = { navHostController.popBackStack() }
             )
         }
         composable(
-            "warranty_form/{assetId}?warrantyId={warrantyId}",
+            Screen.WarrantyForm.route,
             arguments = listOf(
                 navArgument("assetId") { type = NavType.StringType },
                 navArgument("warrantyId") {
@@ -112,32 +121,32 @@ fun NavGraph(navHostController: NavHostController) {
             )
         }
         composable(
-            "maintenance_list/{assetId}",
+            Screen.MaintenanceList.route,
             arguments = listOf(navArgument("assetId") { type = NavType.StringType })
         ) {
             MaintenanceListScreen(
-                onMaintenanceClick = { maintenanceId -> navHostController.navigate("maintenance_detail/$maintenanceId") },
+                onMaintenanceClick = { maintenanceId -> navHostController.navigate(Screen.MaintenanceDetail.createRoute(maintenanceId)) },
                 onAddClick = {
                     val assetId = it.arguments?.getString("assetId") ?: ""
-                    navHostController.navigate("maintenance_form/$assetId")
+                    navHostController.navigate(Screen.MaintenanceForm.createRoute(assetId))
                 },
                 onBack = { navHostController.popBackStack() }
             )
         }
         composable(
-            "maintenance_detail/{maintenanceId}",
+            Screen.MaintenanceDetail.route,
             arguments = listOf(navArgument("maintenanceId") { type = NavType.StringType })
         ) {
             MaintenanceDetailScreen(
                 onBack = { navHostController.popBackStack() },
-                onEdit = { maintenanceId, assetId ->
-                    navHostController.navigate("maintenance_form/$assetId?maintenanceId=$maintenanceId")
+                onEdit = { assetId, maintenanceId ->
+                    navHostController.navigate(Screen.MaintenanceForm.createRoute(assetId, maintenanceId))
                 },
                 onDelete = { navHostController.popBackStack() }
             )
         }
         composable(
-            "maintenance_form/{assetId}?maintenanceId={maintenanceId}",
+            Screen.MaintenanceForm.route,
             arguments = listOf(
                 navArgument("assetId") { type = NavType.StringType },
                 navArgument("maintenanceId") {
@@ -153,20 +162,20 @@ fun NavGraph(navHostController: NavHostController) {
             )
         }
         composable(
-            "document_list/{assetId}",
+            Screen.DocumentList.route,
             arguments = listOf(navArgument("assetId") { type = NavType.StringType })
         ) {
             DocumentListScreen(
-                onDocumentClick = { documentId -> navHostController.navigate("document_detail/$documentId") },
+                onDocumentClick = { documentId -> navHostController.navigate(Screen.DocumentDetail.createRoute(documentId)) },
                 onAddClick = {
                     val assetId = it.arguments?.getString("assetId") ?: ""
-                    navHostController.navigate("document_form/$assetId")
+                    navHostController.navigate(Screen.DocumentForm.createRoute(assetId = assetId))
                 },
                 onBack = { navHostController.popBackStack() }
             )
         }
         composable(
-            "document_detail/{documentId}",
+            Screen.DocumentDetail.route,
             arguments = listOf(navArgument("documentId") { type = NavType.StringType })
         ) {
             DocumentDetailScreen(
@@ -175,13 +184,19 @@ fun NavGraph(navHostController: NavHostController) {
             )
         }
         composable(
-            "document_form/{assetId}",
+            Screen.DocumentForm.route,
             arguments = listOf(
-                navArgument("assetId") { type = NavType.StringType },
-            )
+                navArgument("assetId") { defaultValue = "" },
+                navArgument("imageUri") { defaultValue = "" },
+                navArgument("ocrText") { defaultValue = "" },
+            ),
         ) {
             DocumentFormScreen(
-                onSaved = { navHostController.popBackStack() },
+                onSaved = { assetId ->
+                    navHostController.navigate(Screen.DocumentList.createRoute(assetId)) {
+                        popUpTo(Screen.Home.route)
+                    }
+                },
                 onBack = { navHostController.popBackStack() }
             )
         }

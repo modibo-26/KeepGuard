@@ -1,5 +1,6 @@
 package com.modibo.keepguard.presentation.screen.assets.form
 
+import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -23,6 +24,12 @@ data class AssetFormState(
     val model: String = "",
     val serialNumber: String = "",
     val purchasePlace: String = "",
+    val imageUrl: String = "",
+    val imageUri: Uri? = null,
+    val purchaseDate: Long? = null,
+    val purchasePrice: Double? = null,
+    val originalCreatedAt: Long = 0,
+    val isEditing: Boolean = false,
     val isSaved: Boolean = false,
     val isLoading: Boolean = false,
     val error: String? = null
@@ -42,6 +49,7 @@ class AssetFormViewModel @Inject constructor(
 
     init {
         if (assetId.isNotEmpty()) {
+            _state.value = _state.value.copy(isEditing = true)
             loadAsset()
         }
     }
@@ -53,22 +61,28 @@ class AssetFormViewModel @Inject constructor(
     fun onModelChange(value: String) { _state.value = _state.value.copy(model = value) }
     fun onSerialNumberChange(value: String) { _state.value = _state.value.copy(serialNumber = value) }
     fun onPurchasePlaceChange(value: String) { _state.value = _state.value.copy(purchasePlace = value) }
+    fun onImageUriChange(value: Uri?) { _state.value = _state.value.copy(imageUri = value) }
 
     fun saveAsset() {
+        val s = _state.value
         val asset = Asset(
             id = assetId,
-            name = _state.value.name,
-            description = _state.value.description,
-            category = _state.value.category,
-            brand = _state.value.brand,
-            model = _state.value.model,
-            serialNumber = _state.value.serialNumber,
-            purchasePlace = _state.value.purchasePlace,
-            createdAt = System.currentTimeMillis(),
+            name = s.name,
+            description = s.description,
+            category = s.category,
+            brand = s.brand,
+            model = s.model,
+            serialNumber = s.serialNumber,
+            purchasePlace = s.purchasePlace,
+            imageUrl = s.imageUrl,
+            purchaseDate = s.purchaseDate,
+            purchasePrice = s.purchasePrice,
+            createdAt = if (assetId.isNotEmpty()) s.originalCreatedAt else System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis()
         )
         viewModelScope.launch {
-            val flow = if (assetId.isNotEmpty()) updateAsset(asset) else addAsset(asset)
+            val imageUri = state.value.imageUri
+            val flow = if (assetId.isNotEmpty()) updateAsset(asset, imageUri) else addAsset(asset,  imageUri)
             flow.collect { resource ->
                 when (resource) {
                     is Resource.Loading -> _state.value = _state.value.copy(isLoading = true)
@@ -93,6 +107,10 @@ class AssetFormViewModel @Inject constructor(
                             model = asset.model,
                             serialNumber = asset.serialNumber,
                             purchasePlace = asset.purchasePlace,
+                            imageUrl = asset.imageUrl,
+                            purchaseDate = asset.purchaseDate,
+                            purchasePrice = asset.purchasePrice,
+                            originalCreatedAt = asset.createdAt,
                             isLoading = false
                         )
                     }

@@ -4,6 +4,7 @@ import android.net.Uri
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
+import com.modibo.keepguard.core.util.Constants
 import com.modibo.keepguard.core.util.Resource
 import com.modibo.keepguard.data.remote.dto.DocumentDto
 import com.modibo.keepguard.data.remote.mapper.toDomain
@@ -16,10 +17,11 @@ import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 class DocumentRepositoryImpl @Inject constructor(
+    private val auth: FirebaseAuth,
     private val firestore: FirebaseFirestore,
     private val storage: FirebaseStorage,
-    private val auth: FirebaseAuth,
 ): DocumentRepository {
+    val entity = "document"
     override fun addDocument(
         document: Document,
         fileUri: Uri
@@ -27,7 +29,7 @@ class DocumentRepositoryImpl @Inject constructor(
         emit(Resource.Loading())
         try {
             val docId = firestore.collection("documents").document().id
-            val userId = auth.currentUser?.uid ?: ""
+            val userId = auth.currentUser?.uid ?: throw Exception("Non connecté")
             val ref = storage.reference.child("users/${userId}/documents/$docId/file")
             ref.putFile(fileUri).await()
             val downloadUrl = ref.downloadUrl.await().toString()
@@ -73,7 +75,7 @@ class DocumentRepositoryImpl @Inject constructor(
                 emit(Resource.Error("Document introuvable"))
             }
         } catch (e: Exception) {
-            emit(Resource.Error(e.message ?: "Erreur de fetch"))
+            emit(Resource.Error(e.message ?: Constants.ErrorMessages.fetchError(entity)))
         }
     }
 

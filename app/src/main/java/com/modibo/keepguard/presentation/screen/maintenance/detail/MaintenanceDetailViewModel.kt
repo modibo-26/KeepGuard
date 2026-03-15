@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.modibo.keepguard.core.util.Resource
+import com.modibo.keepguard.data.worker.ReminderScheduler
 import com.modibo.keepguard.domain.model.Maintenance
 import com.modibo.keepguard.domain.usecase.maintenance.DeleteMaintenanceUseCase
 import com.modibo.keepguard.domain.usecase.maintenance.GetMaintenanceByIdUseCase
@@ -24,6 +25,7 @@ data class MaintenanceDetailState(
 class MaintenanceDetailViewModel @Inject constructor(
     private val getMaintenanceById: GetMaintenanceByIdUseCase,
     private val deleteMaintenance: DeleteMaintenanceUseCase,
+    private val scheduler: ReminderScheduler,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
     private val maintenanceId: String = savedStateHandle.get<String>("maintenanceId") ?: ""
@@ -58,10 +60,13 @@ class MaintenanceDetailViewModel @Inject constructor(
             deleteMaintenance(maintenanceId).collect { resource ->
                 when (resource) {
                     is Resource.Loading -> _state.value = _state.value.copy(isLoading = true)
-                    is Resource.Success -> _state.value = _state.value.copy(
-                        isDeleted = true,
-                        isLoading = false
-                    )
+                    is Resource.Success -> {
+                        _state.value = _state.value.copy(
+                            isDeleted = true,
+                            isLoading = false
+                        )
+                        scheduler.cancel(maintenanceId)
+                    }
                     is Resource.Error -> _state.value = _state.value.copy(
                         error = resource.message,
                         isLoading = false

@@ -1,7 +1,9 @@
 package com.modibo.keepguard.data.repository
 
+import android.net.Uri
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import com.modibo.keepguard.core.util.Resource
 import com.modibo.keepguard.data.remote.dto.AssetDto
 import com.modibo.keepguard.data.remote.mapper.toDomain
@@ -15,7 +17,8 @@ import javax.inject.Inject
 
 class AssetRepositoryImpl @Inject constructor(
     private val auth: FirebaseAuth,
-    private val firestore: FirebaseFirestore
+    private val firestore: FirebaseFirestore,
+    private val storage: FirebaseStorage,
 ) : AssetRepository{
     override fun getAssets(): Flow<Resource<List<Asset>>> = flow {
         emit(Resource.Loading())
@@ -23,6 +26,7 @@ class AssetRepositoryImpl @Inject constructor(
             val userId = auth.currentUser?.uid ?: throw Exception("Non connecté")
             val snapshot = firestore.collection("assets")
                 .whereEqualTo("userId", userId)
+                .orderBy("createdAt", com.google.firebase.firestore.Query.Direction.DESCENDING)
                 .get()
                 .await()
             val assets = snapshot.documents.mapNotNull { doc ->
@@ -54,12 +58,24 @@ class AssetRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun addAsset(asset: Asset): Flow<Resource<Unit>> = flow {
+    override fun addAsset(
+        asset: Asset,
+        imageUri: Uri?
+    ): Flow<Resource<Unit>> = flow {
         emit(Resource.Loading())
         try {
+            val assetId = firestore.collection("assets").document().id
             val userId = auth.currentUser?.uid ?: throw Exception("Non connecté")
+            val finalAsset = if (imageUri != null) {
+                val ref = storage.reference.child("users/${userId}/assets/$assetId/image")
+                ref.putFile(imageUri).await()
+                val downloadUrl = ref.downloadUrl.await().toString()
+                asset.copy(imageUrl = downloadUrl)
+            } else {
+                asset
+            }
             firestore.collection("assets")
-                .add(asset.toDto().copy(userId = userId))
+                .document(assetId).set(finalAsset.toDto().copy(userId = userId))
                 .await()
             emit(Resource.Success(Unit))
         } catch (e: Exception) {
@@ -67,12 +83,24 @@ class AssetRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun updateAsset(asset: Asset): Flow<Resource<Unit>> = flow {
+    override fun updateAsset(
+        asset: Asset,
+        imageUri: Uri?
+    ): Flow<Resource<Unit>> = flow {
         emit(Resource.Loading())
         try {
+            val userId = auth.currentUser?.uid ?: throw Exception("Non connecté")
+            val finalAsset = if (imageUri != null) {
+                val ref = storage.reference.child("users/${userId}/assets/${asset.id}/image")
+                ref.putFile(imageUri).await()
+                val downloadUrl = ref.downloadUrl.await().toString()
+                asset.copy(imageUrl = downloadUrl)
+            } else {
+                asset
+            }
             firestore.collection("assets")
                 .document(asset.id)
-                .set(asset.toDto())
+                .set(finalAsset.toDto().copy(userId = userId))
                 .await()
             emit(Resource.Success(Unit))
         } catch (e: Exception) {
