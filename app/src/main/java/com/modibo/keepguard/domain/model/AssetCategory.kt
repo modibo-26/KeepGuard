@@ -5,6 +5,6 @@ enum class AssetCategory(val label: String) {
     VEHICLE("Automobile"),
     TECH("Informatique"),
     FURNITURE("Mobilier"),
-    PROPERTY("Immobilier"),
+//    PROPERTY("Immobilier"),
     OTHER("Autre")
 }
