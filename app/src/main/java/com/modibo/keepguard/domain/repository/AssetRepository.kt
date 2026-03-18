@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.Flow
 interface AssetRepository {
     fun getAssets(): Flow<Resource<List<Asset>>>
     fun getAssetById(assetId: String): Flow<Resource<Asset>>
-    fun addAsset(asset: Asset,  imageUri: Uri? = null): Flow<Resource<Unit>>
-    fun updateAsset(asset: Asset, imageUri: Uri? = null): Flow<Resource<Unit>>
+    fun addAsset(asset: Asset,  imageUri: Uri? = null): Flow<Resource<Asset>>
+    fun updateAsset(asset: Asset, imageUri: Uri? = null): Flow<Resource<Asset>>
     fun deleteAsset(assetId: String): Flow<Resource<Unit>>
 }

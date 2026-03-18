@@ -4,7 +4,8 @@ import android.net.Uri
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
-import com.modibo.keepguard.core.util.Constants
+import com.modibo.keepguard.core.util.Constants.Collections
+import com.modibo.keepguard.core.util.Constants.ErrorMessages
 import com.modibo.keepguard.core.util.Resource
 import com.modibo.keepguard.data.remote.dto.DocumentDto
 import com.modibo.keepguard.data.remote.mapper.toDomain
@@ -21,32 +22,35 @@ class DocumentRepositoryImpl @Inject constructor(
     private val firestore: FirebaseFirestore,
     private val storage: FirebaseStorage,
 ): DocumentRepository {
-    val entity = "document"
+    private val entity = "document"
+
     override fun addDocument(
         document: Document,
         fileUri: Uri
-    ): Flow<Resource<Unit>> = flow {
+    ): Flow<Resource<Document>> = flow {
         emit(Resource.Loading())
         try {
-            val docId = firestore.collection("documents").document().id
-            val userId = auth.currentUser?.uid ?: throw Exception("Non connecté")
+            val docId = firestore.collection(Collections.DOCUMENTS).document().id
+            val userId = auth.currentUser?.uid ?: throw Exception(ErrorMessages.NOT_AUTHENTICATED)
             val ref = storage.reference.child("users/${userId}/documents/$docId/file")
             ref.putFile(fileUri).await()
             val downloadUrl = ref.downloadUrl.await().toString()
             val updateDoc = document.copy(fileUrl = downloadUrl, userId = userId)
-            firestore.collection("documents")
-                .add(updateDoc.toDto())
+            firestore.collection(Collections.DOCUMENTS)
+                .document(docId)
+                .set(updateDoc.toDto())
                 .await()
-            emit(Resource.Success(Unit))
+            val savedDoc = updateDoc.copy(id = docId)
+            emit(Resource.Success(savedDoc))
         } catch (e: Exception) {
-            emit(Resource.Error(e.message ?: "Erreur d'ajout du document"))
+            emit(Resource.Error(e.message ?: ErrorMessages.addError(entity)))
         }
     }
 
     override fun getDocumentsByAsset(assetId: String): Flow<Resource<List<Document>>> = flow  {
         emit(Resource.Loading())
         try {
-            val snapshot = firestore.collection("documents")
+            val snapshot = firestore.collection(Collections.DOCUMENTS)
                 .whereEqualTo("assetId", assetId)
                 .get()
                 .await()
@@ -55,14 +59,14 @@ class DocumentRepositoryImpl @Inject constructor(
             }
             emit(Resource.Success(documents))
         } catch (e: Exception) {
-            emit(Resource.Error(e.message ?: "Erreur de fetch"))
+            emit(Resource.Error(e.message ?: ErrorMessages.fetchError(entity)))
         }
     }
 
     override fun getDocumentById(documentId: String): Flow<Resource<Document>> = flow  {
         emit(Resource.Loading())
         try {
-            val doc = firestore.collection("documents")
+            val doc = firestore.collection(Collections.DOCUMENTS)
                 .document(documentId)
                 .get()
                 .await()
@@ -75,22 +79,22 @@ class DocumentRepositoryImpl @Inject constructor(
                 emit(Resource.Error("Document introuvable"))
             }
         } catch (e: Exception) {
-            emit(Resource.Error(e.message ?: Constants.ErrorMessages.fetchError(entity)))
+            emit(Resource.Error(e.message ?: ErrorMessages.fetchError(entity)))
         }
     }
 
     override fun deleteDocument(documentId: String): Flow<Resource<Unit>> = flow {
         emit(Resource.Loading())
         try {
-            val doc = firestore.collection("documents").document(documentId).get().await()
+            val doc = firestore.collection(Collections.DOCUMENTS).document(documentId).get().await()
             val fileUrl = doc.getString("fileUrl")
             if (!fileUrl.isNullOrEmpty()) {
                 storage.getReferenceFromUrl(fileUrl).delete().await()
             }
-            firestore.collection("documents").document(documentId).delete().await()
+            firestore.collection(Collections.DOCUMENTS).document(documentId).delete().await()
             emit(Resource.Success(Unit))
         } catch (e: Exception) {
-            emit(Resource.Error(e.message ?: "Erreur dans la suppression"))
+            emit(Resource.Error(e.message ?: ErrorMessages.deleteError(entity)))
         }
     }
 }

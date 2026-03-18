@@ -4,6 +4,8 @@ import android.net.Uri
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
+import com.modibo.keepguard.core.util.Constants.Collections
+import com.modibo.keepguard.core.util.Constants.ErrorMessages
 import com.modibo.keepguard.core.util.Resource
 import com.modibo.keepguard.data.remote.dto.AssetDto
 import com.modibo.keepguard.data.remote.mapper.toDomain
@@ -19,12 +21,14 @@ class AssetRepositoryImpl @Inject constructor(
     private val auth: FirebaseAuth,
     private val firestore: FirebaseFirestore,
     private val storage: FirebaseStorage,
-) : AssetRepository{
+) : AssetRepository {
+    private val entity = "asset"
+
     override fun getAssets(): Flow<Resource<List<Asset>>> = flow {
         emit(Resource.Loading())
         try {
-            val userId = auth.currentUser?.uid ?: throw Exception("Non connecté")
-            val snapshot = firestore.collection("assets")
+            val userId = auth.currentUser?.uid ?: throw Exception(ErrorMessages.NOT_AUTHENTICATED)
+            val snapshot = firestore.collection(Collections.ASSETS)
                 .whereEqualTo("userId", userId)
                 .orderBy("createdAt", com.google.firebase.firestore.Query.Direction.DESCENDING)
                 .get()
@@ -34,14 +38,14 @@ class AssetRepositoryImpl @Inject constructor(
             }
             emit(Resource.Success(assets))
         } catch (e: Exception) {
-            emit(Resource.Error(e.message ?: "Erreur de fetch"))
+            emit(Resource.Error(e.message ?: ErrorMessages.fetchError(entity)))
         }
     }
 
     override fun getAssetById(assetId: String): Flow<Resource<Asset>> = flow {
         emit(Resource.Loading())
         try {
-            val doc = firestore.collection("assets")
+            val doc = firestore.collection(Collections.ASSETS)
                 .document(assetId)
                 .get()
                 .await()
@@ -54,18 +58,18 @@ class AssetRepositoryImpl @Inject constructor(
                 emit(Resource.Error("Asset introuvable"))
             }
         } catch (e: Exception) {
-            emit(Resource.Error(e.message ?: "Erreur de fetch"))
+            emit(Resource.Error(e.message ?: ErrorMessages.fetchError(entity)))
         }
     }
 
     override fun addAsset(
         asset: Asset,
         imageUri: Uri?
-    ): Flow<Resource<Unit>> = flow {
+    ): Flow<Resource<Asset>> = flow {
         emit(Resource.Loading())
         try {
-            val assetId = firestore.collection("assets").document().id
-            val userId = auth.currentUser?.uid ?: throw Exception("Non connecté")
+            val assetId = firestore.collection(Collections.ASSETS).document().id
+            val userId = auth.currentUser?.uid ?: throw Exception(ErrorMessages.NOT_AUTHENTICATED)
             val finalAsset = if (imageUri != null) {
                 val ref = storage.reference.child("users/${userId}/assets/$assetId/image")
                 ref.putFile(imageUri).await()
@@ -74,22 +78,23 @@ class AssetRepositoryImpl @Inject constructor(
             } else {
                 asset
             }
-            firestore.collection("assets")
+            firestore.collection(Collections.ASSETS)
                 .document(assetId).set(finalAsset.toDto().copy(userId = userId))
                 .await()
-            emit(Resource.Success(Unit))
+            val savedAsset = finalAsset.copy(id = assetId)
+            emit(Resource.Success(savedAsset))
         } catch (e: Exception) {
-            emit(Resource.Error(e.message ?: "Erreur d'ajout de l'asset"))
+            emit(Resource.Error(e.message ?: ErrorMessages.addError(entity)))
         }
     }
 
     override fun updateAsset(
         asset: Asset,
         imageUri: Uri?
-    ): Flow<Resource<Unit>> = flow {
+    ): Flow<Resource<Asset>> = flow {
         emit(Resource.Loading())
         try {
-            val userId = auth.currentUser?.uid ?: throw Exception("Non connecté")
+            val userId = auth.currentUser?.uid ?: throw Exception(ErrorMessages.NOT_AUTHENTICATED)
             val finalAsset = if (imageUri != null) {
                 val ref = storage.reference.child("users/${userId}/assets/${asset.id}/image")
                 ref.putFile(imageUri).await()
@@ -98,26 +103,28 @@ class AssetRepositoryImpl @Inject constructor(
             } else {
                 asset
             }
-            firestore.collection("assets")
+            firestore.collection(Collections.ASSETS)
                 .document(asset.id)
                 .set(finalAsset.toDto().copy(userId = userId))
                 .await()
-            emit(Resource.Success(Unit))
+            emit(Resource.Success(finalAsset))
         } catch (e: Exception) {
-            emit(Resource.Error(e.message ?: "Erreur dans la modification"))
+            emit(Resource.Error(e.message ?: ErrorMessages.updateError(entity)))
         }
     }
 
     override fun deleteAsset(assetId: String): Flow<Resource<Unit>> = flow {
         emit(Resource.Loading())
         try {
-            firestore.collection("assets")
-                .document(assetId)
-                .delete()
-                .await()
+            val doc = firestore.collection(Collections.ASSETS).document(assetId).get().await()
+            val imageUrl = doc.getString("imageUrl")
+            if (!imageUrl.isNullOrEmpty()) {
+                storage.getReferenceFromUrl(imageUrl).delete().await()
+            }
+            firestore.collection(Collections.ASSETS).document(assetId).delete().await()
             emit(Resource.Success(Unit))
         } catch (e: Exception) {
-            emit(Resource.Error(e.message ?: "Erreur dans la suppression"))
+            emit(Resource.Error(e.message ?: ErrorMessages.deleteError(entity)))
         }
     }
 }
