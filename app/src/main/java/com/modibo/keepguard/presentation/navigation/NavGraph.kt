@@ -51,7 +51,11 @@ fun NavGraph(navHostController: NavHostController) {
             )
         }
         composable(Screen.Settings.route) {
-            SettingsScreen()
+            SettingsScreen(
+                onDelete = { navHostController.navigate(Screen.Home.route) {
+                    popUpTo(0 ) {inclusive = true}
+                } }
+            )
         }
         composable(
             Screen.AssetDetail.route,

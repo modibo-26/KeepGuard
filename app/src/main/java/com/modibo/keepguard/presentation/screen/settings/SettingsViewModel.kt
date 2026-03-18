@@ -4,9 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.modibo.keepguard.core.util.Resource
 import com.modibo.keepguard.domain.model.User
-import com.modibo.keepguard.domain.repository.AuthRepository
 import com.modibo.keepguard.domain.usecase.auth.ContinueWithGoogleUseCase
+import com.modibo.keepguard.domain.usecase.auth.DeleteAccountUseCase
+import com.modibo.keepguard.domain.usecase.auth.GetCurrentUserUseCase
 import com.modibo.keepguard.domain.usecase.auth.LinkAccountUseCase
+import com.modibo.keepguard.domain.usecase.auth.ReauthWithEmailUseCase
+import com.modibo.keepguard.domain.usecase.auth.ReauthWithGoogleUseCase
 import com.modibo.keepguard.domain.usecase.auth.SignInEmailUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,8 +23,9 @@ data class SettingsState(
     val displayName: String = "",
     val password: String = "",
     val isLoading: Boolean = false,
-    val error: String? = null,
     val authSuccess: Boolean = false,
+    val error: String? = null,
+    val isDeleted: Boolean = false,
 )
 
 @HiltViewModel
@@ -29,7 +33,10 @@ class SettingsViewModel @Inject constructor(
     private val signInEmail: SignInEmailUseCase,
     private val linkAccount: LinkAccountUseCase,
     private val continueWithGoogle: ContinueWithGoogleUseCase ,
-    private val repository: AuthRepository,
+    private val getCurrentUser: GetCurrentUserUseCase,
+    private val reauthWithEmail: ReauthWithEmailUseCase,
+    private val reauthWithGoogle: ReauthWithGoogleUseCase,
+    private val deleteAccount: DeleteAccountUseCase
 ): ViewModel() {
 
     private val _state = MutableStateFlow(SettingsState())
@@ -43,7 +50,7 @@ class SettingsViewModel @Inject constructor(
     fun onPasswordChange(value: String) { _state.value = _state.value.copy(password = value) }
 
     fun loadUser() {
-        val user = repository.getCurrentUser()
+        val user = getCurrentUser()
         _state.value = _state.value.copy(user = user)
         _state.value = _state.value.copy(email = user?.email ?:"")
         _state.value = _state.value.copy(displayName = user?.displayName ?: "")
@@ -80,6 +87,40 @@ class SettingsViewModel @Inject constructor(
                     is Resource.Loading -> _state.value = _state.value.copy(isLoading = true)
                     is Resource.Success -> _state.value = _state.value.copy(user = resource.data, authSuccess = true, isLoading = false)
                     is Resource.Error -> _state.value = _state.value.copy(error = resource.message, isLoading = false)
+                }
+            }
+        }
+    }
+
+    fun reauthAndDelete(password: String = "") {
+        val provider = _state.value.user?.providerId
+        viewModelScope.launch {
+            val flow = if (provider == "password") reauthWithEmail(_state.value.email, password) else reauthWithGoogle()
+            flow.collect { resource ->
+                when (resource) {
+                    is Resource.Loading -> _state.value = _state.value.copy(isLoading = true)
+                    is Resource.Success ->  {
+                        _state.value = _state.value.copy(isLoading = false)
+                        deleteUser()
+                    }
+                    is Resource.Error -> _state.value = _state.value.copy(error = resource.message, isLoading = false)
+                }
+            }
+        }
+    }
+
+    private fun deleteUser() {
+        viewModelScope.launch {
+            deleteAccount().collect { resource ->
+                when (resource) {
+                    is Resource.Loading -> _state.value = _state.value.copy(isLoading = true)
+                    is Resource.Success -> _state.value =
+                        _state.value.copy(isDeleted = true, isLoading = false)
+
+                    is Resource.Error -> {
+                        _state.value =
+                            _state.value.copy(error = resource.message, isLoading = false)
+                    }
                 }
             }
         }

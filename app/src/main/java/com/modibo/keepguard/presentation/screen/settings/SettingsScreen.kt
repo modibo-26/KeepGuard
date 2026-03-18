@@ -10,6 +10,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -22,12 +23,15 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -37,10 +41,13 @@ import androidx.hilt.navigation.compose.hiltViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    viewModel: SettingsViewModel = hiltViewModel()
+    viewModel: SettingsViewModel = hiltViewModel(),
+    onDelete: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var showAuthRequiredDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(state.error) {
         state.error?.let {
@@ -54,6 +61,13 @@ fun SettingsScreen(
             snackBarHostState.showSnackbar("Compte lié avec succès")
             viewModel.clearAuthSuccess()
         }
+    }
+
+    if (state.isDeleted) {
+        LaunchedEffect(Unit) {
+            onDelete()
+        }
+        return
     }
 
     Scaffold(
@@ -145,6 +159,10 @@ fun SettingsScreen(
                 ) {
                     Text("S'authentifier avec Google")
                 }
+            } else {
+                Button({showDeleteDialog = true}) {
+                    Text("Supprimer le compte !")
+                }
             }
 
             if (state.isLoading) {
@@ -153,7 +171,62 @@ fun SettingsScreen(
             }
 
             Spacer(Modifier.height(32.dp))
+        }
+        if (showDeleteDialog) {
+            AlertDialog(
+                { showDeleteDialog = false },
+                {
+                    TextButton(onClick = {
+                        showDeleteDialog = false
+                        showAuthRequiredDialog = true
+                    }
+                    ) {
+                        Text("Supprimer")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDeleteDialog = false }) {
+                        Text("Annuler")
+                    }
+                },
+                title = { Text("Supprimer") },
+                text = { Text("Voulez-vous vraiment supprimer ce compte ? Cette action est irréversible") },
+            )
+        }
 
+        if (showAuthRequiredDialog) {
+            AlertDialog(
+                { showAuthRequiredDialog = false },
+                {
+                    TextButton(onClick = {
+                        showAuthRequiredDialog = false
+                        viewModel.reauthAndDelete(
+                            password = if (state.user?.providerId == "password") state.password else "")
+                    }) {
+                        Text("Se connecter à nouveau")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showAuthRequiredDialog = false }) {
+                        Text("Annuler")
+                    }
+                },
+                title = { Text("Connexion requise") },
+                text = {
+                    Column {
+                        Text("Pour supprimer ce compte, reconnectez-vous")
+                        if (state.user?.providerId == "password") {
+                            Spacer(Modifier.height(8.dp))
+                            OutlinedTextField(
+                                value = state.password,
+                                onValueChange = { viewModel.onPasswordChange(it) },
+                                label = { Text("Mot de passe") },
+                                visualTransformation = PasswordVisualTransformation()
+                            )
+                        }
+                    }
+                },
+            )
         }
     }
 }

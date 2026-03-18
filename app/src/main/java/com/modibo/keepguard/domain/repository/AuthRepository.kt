@@ -9,6 +9,9 @@ interface AuthRepository {
     fun signInWithEmail(email: String, password: String): Flow<Resource<User>>
     fun linkWithEmail(email: String, password: String): Flow<Resource<User>>
     fun continueWithGoogle(): Flow<Resource<User>>
+    fun reauthenticateWithEmail(email: String, password: String): Flow<Resource<Unit>>
+    fun reauthenticateWithGoogle(): Flow<Resource<Unit>>
     fun getCurrentUser(): User?
     fun signOut()
+    fun deleteAccount() : Flow<Resource<Unit>>
 }
