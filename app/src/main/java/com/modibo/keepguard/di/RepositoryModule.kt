@@ -4,11 +4,13 @@ import com.modibo.keepguard.data.repository.AssetRepositoryImpl
 import com.modibo.keepguard.data.repository.AuthRepositoryImpl
 import com.modibo.keepguard.data.repository.DocumentRepositoryImpl
 import com.modibo.keepguard.data.repository.MaintenanceRepositoryImpl
+import com.modibo.keepguard.data.repository.ScannerRepositoryImpl
 import com.modibo.keepguard.data.repository.WarrantyRepositoryImpl
 import com.modibo.keepguard.domain.repository.AssetRepository
 import com.modibo.keepguard.domain.repository.AuthRepository
 import com.modibo.keepguard.domain.repository.DocumentRepository
 import com.modibo.keepguard.domain.repository.MaintenanceRepository
+import com.modibo.keepguard.domain.repository.ScannerRepository
 import com.modibo.keepguard.domain.repository.WarrantyRepository
 import dagger.Binds
 import dagger.Module
@@ -38,4 +40,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindDocumentRepository(impl: DocumentRepositoryImpl): DocumentRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindScannerRepository(impl: ScannerRepositoryImpl): ScannerRepository
 }

@@ -1,13 +1,16 @@
 package com.modibo.keepguard.presentation.screen.warranty.form
 
+import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.modibo.keepguard.core.util.Constants
 import com.modibo.keepguard.core.util.Resource
 import com.modibo.keepguard.data.worker.ReminderScheduler
+import com.modibo.keepguard.domain.model.ScannedData
 import com.modibo.keepguard.domain.model.Warranty
 import com.modibo.keepguard.domain.model.WarrantyType
+import com.modibo.keepguard.domain.usecase.scanner.ParseDocumentUseCase
 import com.modibo.keepguard.domain.usecase.warranty.AddWarrantyUseCase
 import com.modibo.keepguard.domain.usecase.warranty.GetWarrantyByIdUseCase
 import com.modibo.keepguard.domain.usecase.warranty.UpdateWarrantyUseCase
@@ -18,12 +21,20 @@ import kotlinx.coroutines.launch
 import java.util.Calendar
 import javax.inject.Inject
 
+enum class WarrantyFormStep {
+    SOURCE, INFO, RECAP
+}
+
 data class WarrantyFormState(
+    val step: WarrantyFormStep = WarrantyFormStep.SOURCE,
     val type: WarrantyType = WarrantyType.MANUFACTURER,
     val startDate: Long? = null,
     val durationMonths: String = "24",
     val provider: String = "",
     val conditions: String = "",
+    val scannedDocumentUri: Uri? = null,
+    val fromScanner: Boolean = false,
+    val isEditing: Boolean = false,
     val isSaved: Boolean = false,
     val isLoading: Boolean = false,
     val error: String? = null
@@ -34,6 +45,7 @@ class WarrantyFormViewModel @Inject constructor(
     private val addWarranty: AddWarrantyUseCase,
     private val updateWarranty: UpdateWarrantyUseCase,
     private val getWarrantyById: GetWarrantyByIdUseCase,
+    private val parseDocument: ParseDocumentUseCase,
     private val scheduler: ReminderScheduler,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -45,6 +57,7 @@ class WarrantyFormViewModel @Inject constructor(
 
     init {
         if (warrantyId.isNotEmpty()) {
+            _state.value = _state.value.copy(isEditing = true, step = WarrantyFormStep.INFO)
             loadWarranty()
         }
     }
@@ -54,6 +67,50 @@ class WarrantyFormViewModel @Inject constructor(
     fun onDurationChange(value: String) { _state.value = _state.value.copy(durationMonths = value) }
     fun onProviderChange(value: String) { _state.value = _state.value.copy(provider = value) }
     fun onConditionsChange(value: String) { _state.value = _state.value.copy(conditions = value) }
+
+    fun onScanResult(uri: Uri) {
+        viewModelScope.launch {
+            parseDocument(uri).collect { resource ->
+                when (resource) {
+                    is Resource.Loading -> _state.value = _state.value.copy(isLoading = true)
+                    is Resource.Success -> {
+                        val data = resource.data ?: ScannedData()
+                        _state.value = _state.value.copy(
+                            scannedDocumentUri = uri,
+                            fromScanner = true,
+                            type = data.warrantyType,
+                            durationMonths = if (data.durationMonths > 0) data.durationMonths.toString() else _state.value.durationMonths,
+                            provider = data.warrantyProvider.ifEmpty { _state.value.provider },
+                            conditions = data.conditions.ifEmpty { _state.value.conditions },
+                            isLoading = false
+                        )
+                    }
+                    is Resource.Error -> _state.value = _state.value.copy(
+                        error = resource.message,
+                        isLoading = false
+                    )
+                }
+            }
+        }
+    }
+
+    fun nextStep() {
+        when (state.value.step) {
+            WarrantyFormStep.SOURCE -> _state.value = _state.value.copy(step = WarrantyFormStep.INFO)
+            WarrantyFormStep.INFO -> _state.value = _state.value.copy(step = WarrantyFormStep.RECAP)
+            else -> return
+        }
+    }
+
+    fun prevStep() {
+        when (state.value.step) {
+            WarrantyFormStep.INFO -> _state.value = _state.value.copy(
+                step = if (state.value.isEditing) WarrantyFormStep.INFO else WarrantyFormStep.SOURCE
+            )
+            WarrantyFormStep.RECAP -> _state.value = _state.value.copy(step = WarrantyFormStep.INFO)
+            else -> return
+        }
+    }
 
     private fun calculateEndDate(startDate: Long, months: Int): Long {
         val calendar = Calendar.getInstance()
@@ -83,13 +140,16 @@ class WarrantyFormViewModel @Inject constructor(
             flow.collect { resource ->
                 when (resource) {
                     is Resource.Loading -> _state.value = _state.value.copy(isLoading = true)
-                    is Resource.Success -> { _state.value = _state.value.copy(isSaved = true, isLoading = false)
+                    is Resource.Success -> {
+                        val savedWarranty = resource.data ?: return@collect
                         scheduler.schedule(
-                            resource.data!!.id,
+                            savedWarranty.id,
                             "Garantie Expirante",
                             "Votre garantie expire bientot",
                             endDate - Constants.REMINDER_OFFSET_MILLIS
                         )
+
+                        _state.value = _state.value.copy(isSaved = true, isLoading = false)
                     }
                     is Resource.Error -> _state.value = _state.value.copy(error = resource.message, isLoading = false)
                 }

@@ -1,5 +1,8 @@
 package com.modibo.keepguard.domain.model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 enum class DocumentType(val label: String) {
     INVOICE("Facture"),
     WARRANTY_CERT("Bon de garantie"),

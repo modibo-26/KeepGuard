@@ -1,5 +1,6 @@
 package com.modibo.keepguard.presentation.screen.maintenance.form
 
+import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -8,16 +9,23 @@ import com.modibo.keepguard.core.util.Resource
 import com.modibo.keepguard.data.worker.ReminderScheduler
 import com.modibo.keepguard.domain.model.Maintenance
 import com.modibo.keepguard.domain.model.MaintenanceType
+import com.modibo.keepguard.domain.model.ScannedData
 import com.modibo.keepguard.domain.usecase.maintenance.AddMaintenanceUseCase
 import com.modibo.keepguard.domain.usecase.maintenance.GetMaintenanceByIdUseCase
 import com.modibo.keepguard.domain.usecase.maintenance.UpdateMaintenanceUseCase
+import com.modibo.keepguard.domain.usecase.scanner.ParseDocumentUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+enum class MaintenanceFormStep {
+    SOURCE, INFO, RECAP
+}
+
 data class MaintenanceFormState(
+    val step: MaintenanceFormStep = MaintenanceFormStep.SOURCE,
     val title: String = "",
     val description: String = "",
     val type: MaintenanceType = MaintenanceType.ONE_TIME,
@@ -27,6 +35,9 @@ data class MaintenanceFormState(
     val mileage: String = "",
     val isCompleted: Boolean = false,
     val recurrenceMonths: String = "",
+    val scannedDocumentUri: Uri? = null,
+    val fromScanner: Boolean = false,
+    val isEditing: Boolean = false,
     val isSaved: Boolean = false,
     val isLoading: Boolean = false,
     val error: String? = null
@@ -37,6 +48,7 @@ class MaintenanceFormViewModel @Inject constructor(
     private val addMaintenance: AddMaintenanceUseCase,
     private val updateMaintenance: UpdateMaintenanceUseCase,
     private val getMaintenanceById: GetMaintenanceByIdUseCase,
+    private val parseDocument: ParseDocumentUseCase,
     private val scheduler: ReminderScheduler,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -48,6 +60,7 @@ class MaintenanceFormViewModel @Inject constructor(
 
     init {
         if (maintenanceId.isNotEmpty()) {
+            _state.value = _state.value.copy(isEditing = true, step = MaintenanceFormStep.INFO)
             loadMaintenance()
         }
     }
@@ -61,6 +74,51 @@ class MaintenanceFormViewModel @Inject constructor(
     fun onMileageChange(value: String) { _state.value = _state.value.copy(mileage = value) }
     fun onCompletedChange(value: Boolean) { _state.value = _state.value.copy(isCompleted = value) }
     fun onRecurrenceChange(value: String) { _state.value = _state.value.copy(recurrenceMonths = value) }
+
+    fun onScanResult(uri: Uri) {
+        viewModelScope.launch {
+            parseDocument(uri).collect { resource ->
+                when (resource) {
+                    is Resource.Loading -> _state.value = _state.value.copy(isLoading = true)
+                    is Resource.Success -> {
+                        val data = resource.data ?: ScannedData()
+                        _state.value = _state.value.copy(
+                            scannedDocumentUri = uri,
+                            fromScanner = true,
+                            title = data.maintenanceTitle.ifEmpty { _state.value.title },
+                            description = data.maintenanceDescription.ifEmpty { _state.value.description },
+                            type = data.maintenanceType,
+                            cost = data.cost.ifEmpty { _state.value.cost },
+                            provider = data.maintenanceProvider.ifEmpty { _state.value.provider },
+                            isLoading = false
+                        )
+                    }
+                    is Resource.Error -> _state.value = _state.value.copy(
+                        error = resource.message,
+                        isLoading = false
+                    )
+                }
+            }
+        }
+    }
+
+    fun nextStep() {
+        when (state.value.step) {
+            MaintenanceFormStep.SOURCE -> _state.value = _state.value.copy(step = MaintenanceFormStep.INFO)
+            MaintenanceFormStep.INFO -> _state.value = _state.value.copy(step = MaintenanceFormStep.RECAP)
+            else -> return
+        }
+    }
+
+    fun prevStep() {
+        when (state.value.step) {
+            MaintenanceFormStep.INFO -> _state.value = _state.value.copy(
+                step = if (state.value.isEditing) MaintenanceFormStep.INFO else MaintenanceFormStep.SOURCE
+            )
+            MaintenanceFormStep.RECAP -> _state.value = _state.value.copy(step = MaintenanceFormStep.INFO)
+            else -> return
+        }
+    }
 
     fun saveMaintenance() {
         val date = _state.value.date ?: return

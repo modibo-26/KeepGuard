@@ -10,8 +10,11 @@ sealed class Screen (
     object AssetDetail : Screen("asset_detail/{assetId}") {
         fun createRoute(assetId: String) = route.replace("{assetId}", assetId)
     }
-    object AssetForm : Screen("asset_form?assetId={assetId}") {
-        fun createRoute(assetId: String? = null) = route.replace("{assetId}", assetId.orEmpty())
+    object AssetForm : Screen("asset_form?assetId={assetId}&imageUri={imageUri}&scannedJson={scannedJson}") {
+        fun createRoute(assetId: String? = null, imageUri: String? = null, scannedJson: String? = null) =
+            route.replace("{assetId}", assetId.orEmpty())
+                .replace("{imageUri}", imageUri.orEmpty())
+                .replace("{scannedJson}", scannedJson.orEmpty())
     }
     object WarrantyList : Screen("warranty_list/{assetId}") {
         fun createRoute(assetId: String) = route.replace("{assetId}", assetId)
@@ -37,12 +40,10 @@ sealed class Screen (
     object DocumentDetail : Screen("document_detail/{documentId}") {
         fun createRoute(documentId: String) = route.replace("{documentId}", documentId)
     }
-    object DocumentForm : Screen("document_form?assetId={assetId}&imageUri={imageUri}&ocrText={ocrText}") {
-        fun createRoute(assetId: String? = null, imageUri: String? = null, ocrText: String? = null): String {
-            return "document_form" +
-                    "?assetId=${assetId.orEmpty()}" +
-                    "&imageUri=${imageUri.orEmpty()}" +
-                    "&ocrText=${ocrText.orEmpty()}"
-        }
+    object DocumentForm : Screen("document_form?assetId={assetId}&imageUri={imageUri}&scannedJson={scannedJson}") {
+        fun createRoute(assetId: String? = null, imageUri: String? = null, scannedJson: String? = null) =
+            route.replace("{assetId}", assetId.orEmpty())
+                .replace("{imageUri}", imageUri.orEmpty())
+                .replace("{scannedJson}", scannedJson.orEmpty())
     }
 }

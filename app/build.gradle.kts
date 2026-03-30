@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.services)
     alias(libs.plugins.hilt.android)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
 }
 
@@ -67,6 +68,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.kotlinx.serialization.json)
 
     // Compose
     implementation(libs.androidx.activity.compose)
@@ -82,8 +84,6 @@ dependencies {
 
     // Hilt
     implementation(libs.hilt.android)
-    implementation(libs.androidx.material3)
-    implementation(libs.androidx.compose.ui.text)
     ksp(libs.hilt.android.compiler)
     implementation(libs.hilt.navigation.compose)
     implementation(libs.hilt.work)
@@ -95,6 +95,7 @@ dependencies {
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.firebase.storage.ktx)
     implementation(libs.firebase.messaging.ktx)
+    implementation(libs.firebase.ai)
 
     // Coil (images)
     implementation(libs.coil.compose)
@@ -117,6 +118,9 @@ dependencies {
     implementation(libs.camerax.lifecycle)
     implementation(libs.camerax.view)
     implementation(libs.mlkit.text.recognition)
+
+    //Scanner
+    implementation(libs.play.services.document.scanner)
 
     // Tests
     testImplementation(libs.junit)

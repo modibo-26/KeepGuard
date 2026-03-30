@@ -1,7 +1,6 @@
 package com.modibo.keepguard.presentation.navigation
 
 import android.net.Uri
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -23,6 +22,8 @@ import com.modibo.keepguard.presentation.screen.warranty.detail.WarrantyDetailSc
 import com.modibo.keepguard.presentation.screen.warranty.form.WarrantyFormScreen
 import com.modibo.keepguard.presentation.screen.settings.SettingsScreen
 import com.modibo.keepguard.presentation.screen.warranty.list.WarrantyListScreen
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 @Composable
 fun NavGraph(navHostController: NavHostController) {
@@ -43,11 +44,20 @@ fun NavGraph(navHostController: NavHostController) {
                 onAddClick = { navHostController.navigate(Screen.AssetForm.createRoute()) }
             )
         }
-        composable(Screen.Scanner.route) {
+        composable(
+            Screen.Scanner.route,
+        ) {
             ScannerScreen(
-                onCreateDocument = { uri, ocr ->
-                    navHostController.navigate(Screen.DocumentForm.createRoute(null,  Uri.encode(uri.toString()), Uri.encode(ocr)))
-                }
+                {
+                    uri, scanned ->
+                    val scannedJson = Uri.encode(Json.encodeToString(scanned))
+                    navHostController.navigate(Screen.AssetForm.createRoute(null, Uri.encode(uri.toString()), scannedJson))
+                },
+                {
+                    uri, scanned ->
+                    val scannedJson = Uri.encode(Json.encodeToString(scanned))
+                    navHostController.navigate(Screen.DocumentForm.createRoute(null, Uri.encode(uri.toString()), scannedJson))
+                },
             )
         }
         composable(Screen.Settings.route) {
@@ -72,11 +82,23 @@ fun NavGraph(navHostController: NavHostController) {
         }
         composable(
             Screen.AssetForm.route,
-            arguments = listOf(navArgument("assetId") {
-                type = NavType.StringType
-                nullable = true
-                defaultValue = null
-            })
+            arguments = listOf(
+                navArgument("assetId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+                navArgument("imageUri") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+                navArgument("scannedJson") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+            )
         ) {
             AssetFormScreen(
                 onSaved = { navHostController.popBackStack() },
@@ -190,9 +212,21 @@ fun NavGraph(navHostController: NavHostController) {
         composable(
             Screen.DocumentForm.route,
             arguments = listOf(
-                navArgument("assetId") { defaultValue = "" },
-                navArgument("imageUri") { defaultValue = "" },
-                navArgument("ocrText") { defaultValue = "" },
+                navArgument("assetId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+                navArgument("imageUri") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+                navArgument("scannedJson") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
             ),
         ) {
             DocumentFormScreen(

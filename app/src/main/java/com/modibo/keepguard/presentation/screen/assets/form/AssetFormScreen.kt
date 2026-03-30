@@ -29,7 +29,9 @@ import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.filled.Scanner
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
@@ -73,6 +75,7 @@ import com.modibo.keepguard.domain.model.AssetSubCategory
 import com.modibo.keepguard.domain.model.ConsumerRights
 import com.modibo.keepguard.domain.model.PurchaseMode
 import com.modibo.keepguard.domain.model.RightType
+import com.modibo.keepguard.presentation.component.ScannerButton
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -101,9 +104,8 @@ fun AssetFormScreen(
     val datePickerState = rememberDatePickerState()
     val context = LocalContext.current
     val imageToShow = state.imageUri ?: state.imageUrl.ifEmpty { null }
-    var showSheet by remember { mutableStateOf(false) }
-    val tempFile = File(context.cacheDir, "images/temp_photo.jpg").apply { parentFile?.mkdirs() }
-    val tempUri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", tempFile)
+    val tempFile = remember { File(context.cacheDir, "images/temp_photo_${System.currentTimeMillis()}.jpg").apply { parentFile?.mkdirs() } }
+    val tempUri = remember { FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", tempFile) }
     val currentStepIndex = AssetFormStep.entries.indexOf(state.assetFormStep)
 
     val camera = rememberLauncherForActivityResult(
@@ -195,12 +197,13 @@ fun AssetFormScreen(
             }
         }
     ) { padding ->
-        Column(Modifier.padding(padding)) {
-            // Stepper
-            StepperRow(currentStepIndex)
+        Box(Modifier.padding(padding)) {
+            Column {
+                // Stepper
+                StepperRow(currentStepIndex)
 
-            // Content
-            when (state.assetFormStep) {
+                // Content
+                when (state.assetFormStep) {
                 // ─── STEP 1 : PHOTO ───
                 AssetFormStep.PHOTO -> {
                     Column(
@@ -218,8 +221,7 @@ fun AssetFormScreen(
                         OutlinedCard(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(220.dp)
-                                .clickable { showSheet = true },
+                                .height(220.dp),
                             shape = RoundedCornerShape(16.dp),
                             border = BorderStroke(
                                 2.dp,
@@ -228,7 +230,8 @@ fun AssetFormScreen(
                             )
                         ) {
                             Box(
-                                Modifier.fillMaxWidth().height(220.dp),
+                                Modifier.fillMaxWidth()
+                                    .height(220.dp),
                                 contentAlignment = Alignment.Center
                             ) {
                                 if (imageToShow != null) {
@@ -357,6 +360,35 @@ fun AssetFormScreen(
                     ) {
                         SectionTitle("Informations")
                         Spacer(Modifier.height(8.dp))
+
+                        ScannerButton(
+                            onScanResult = { uri -> viewModel.onImageCaptured(uri) },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        if (state.scannedDocumentUri != null) {
+                            Spacer(Modifier.height(8.dp))
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                AsyncImage(
+                                    model = state.scannedDocumentUri,
+                                    contentDescription = "Document scanné",
+                                    modifier = Modifier
+                                        .size(64.dp)
+                                        .clip(RoundedCornerShape(8.dp)),
+                                    contentScale = ContentScale.Crop
+                                )
+                                Text(
+                                    "Document scanné ✓",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
+                        Spacer(Modifier.height(12.dp))
 
                         OutlinedTextField(
                             state.name, { viewModel.onNameChange(it) },
@@ -553,6 +585,17 @@ fun AssetFormScreen(
                         }
                         Spacer(Modifier.height(24.dp))
                     }
+                }
+            }
+            }
+            if (state.isLoading) {
+                Box(
+                    Modifier
+                        .matchParentSize()
+                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
                 }
             }
         }
