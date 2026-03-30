@@ -1,6 +1,13 @@
 package com.modibo.keepguard.data.repository
 
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.ImageDecoder
 import android.net.Uri
+import android.os.Build
+import android.provider.MediaStore
+import androidx.core.graphics.scale
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
@@ -12,15 +19,18 @@ import com.modibo.keepguard.data.remote.mapper.toDomain
 import com.modibo.keepguard.data.remote.mapper.toDto
 import com.modibo.keepguard.domain.model.Asset
 import com.modibo.keepguard.domain.repository.AssetRepository
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.tasks.await
+import java.io.ByteArrayOutputStream
 import javax.inject.Inject
 
 class AssetRepositoryImpl @Inject constructor(
     private val auth: FirebaseAuth,
     private val firestore: FirebaseFirestore,
     private val storage: FirebaseStorage,
+    @param:ApplicationContext private val context: Context
 ) : AssetRepository {
     private val entity = "asset"
 
@@ -72,7 +82,8 @@ class AssetRepositoryImpl @Inject constructor(
             val userId = auth.currentUser?.uid ?: throw Exception(ErrorMessages.NOT_AUTHENTICATED)
             val finalAsset = if (imageUri != null) {
                 val ref = storage.reference.child("users/${userId}/assets/$assetId/image")
-                ref.putFile(imageUri).await()
+                val bytes = compressImage(context, imageUri)
+                ref.putBytes(bytes).await()
                 val downloadUrl = ref.downloadUrl.await().toString()
                 asset.copy(imageUrl = downloadUrl)
             } else {
@@ -97,7 +108,8 @@ class AssetRepositoryImpl @Inject constructor(
             val userId = auth.currentUser?.uid ?: throw Exception(ErrorMessages.NOT_AUTHENTICATED)
             val finalAsset = if (imageUri != null) {
                 val ref = storage.reference.child("users/${userId}/assets/${asset.id}/image")
-                ref.putFile(imageUri).await()
+                val bytes = compressImage(context, imageUri)
+                ref.putBytes(bytes).await()
                 val downloadUrl = ref.downloadUrl.await().toString()
                 asset.copy(imageUrl = downloadUrl)
             } else {
@@ -126,5 +138,20 @@ class AssetRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             emit(Resource.Error(e.message ?: ErrorMessages.deleteError(entity)))
         }
+    }
+
+    private fun compressImage(context: Context, uri: Uri): ByteArray {
+        val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, uri))
+        } else {
+            context.contentResolver.openInputStream(uri)?.use { stream ->
+                BitmapFactory.decodeStream(stream)
+            } ?: throw IllegalArgumentException("Cannot open URI")
+        }
+        val scaled = bitmap.scale(1024, (1024f * bitmap.height / bitmap.width).toInt())
+        val output = ByteArrayOutputStream()
+        scaled.compress(Bitmap.CompressFormat.JPEG, 80, output)
+        scaled.recycle()
+        return output.toByteArray()
     }
 }
