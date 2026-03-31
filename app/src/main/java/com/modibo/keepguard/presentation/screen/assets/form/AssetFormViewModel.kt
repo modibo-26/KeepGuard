@@ -218,7 +218,7 @@ class AssetFormViewModel @Inject constructor(
                 when (resource) {
                     is Resource.Loading -> _state.value = _state.value.copy(isLoading = true)
                     is Resource.Success -> {
-                        val asset = resource.data!!
+                        val asset = resource.data ?: return@collect
                         _state.value = _state.value.copy(
                             name = asset.name,
                             description = asset.description,

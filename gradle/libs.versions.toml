@@ -28,6 +28,7 @@ mlkitTextRecognition = "16.0.1"
 material3 = "1.4.0"
 uiText = "1.10.5"
 play-services-document-scanner = "16.0.0"
+mockk = "1.13.17"
 
 [libraries]
 # Core
@@ -41,6 +42,7 @@ camerax-camera2 = { group = "androidx.camera", name = "camera-camera2", version.
 camerax-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "camerax" }
 camerax-view = { group = "androidx.camera", name = "camera-view", version.ref = "camerax" }
 mlkit-text-recognition = { group = "com.google.mlkit", name = "text-recognition", version.ref = "mlkitTextRecognition" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 
 # Compose
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
