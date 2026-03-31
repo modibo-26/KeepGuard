@@ -101,7 +101,12 @@ fun NavGraph(navHostController: NavHostController) {
             )
         ) {
             AssetFormScreen(
-                onSaved = { navHostController.popBackStack() },
+                onSaved = {
+                    navHostController.navigate(Screen.AssetList.route) {
+                        popUpTo(Screen.Home.route) { inclusive = false }
+                        launchSingleTop = true
+                    }
+                },
                 onBack = { navHostController.popBackStack() }
             )
         }

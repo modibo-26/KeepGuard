@@ -82,7 +82,7 @@ class AssetFormViewModel @Inject constructor(
     init {
         val fromScanner = uri.isNotEmpty()
         _state.value = _state.value.copy(
-            imageUri = if (fromScanner) uri.toUri() else null,
+            scannedDocumentUri = if (fromScanner) uri.toUri() else null,
             name = documentInfo.name,
             brand = documentInfo.brand,
             model = documentInfo.model,

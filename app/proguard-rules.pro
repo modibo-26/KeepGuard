@@ -1,28 +1,50 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# Keep ALL app classes + annotations + interfaces
+-keep class com.modibo.keepguard.** { *; }
+-keep interface com.modibo.keepguard.** { *; }
+-keep @interface com.modibo.keepguard.** { *; }
+-keep class hilt_aggregated_deps.** { *; }
+-keep class dagger.** { *; }
+-keep interface dagger.** { *; }
+-keep @interface dagger.** { *; }
+-keep class javax.inject.** { *; }
+-keep class androidx.hilt.** { *; }
+-keep @dagger.internal.DaggerGenerated class * { *; }
+-keep @dagger.internal.KeepFieldType class * { *; }
+-keep @dagger.internal.IdentifierNameString class * { *; }
+-keepclassmembers class * {
+    @dagger.internal.KeepFieldType *;
+}
+-keepclassmembers class * {
+    @dagger.internal.IdentifierNameString *;
+}
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
-
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
-
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
-
-# Firebase
+# Firebase DTOs
 -keep class com.modibo.keepguard.data.remote.dto.** { *; }
+
+# Domain models (enums used in Firestore valueOf)
+-keep class com.modibo.keepguard.domain.model.** { *; }
+
+# Kotlin Serialization
+-keepattributes *Annotation*, InnerClasses
+-dontnote kotlinx.serialization.**
+-keepclassmembers @kotlinx.serialization.Serializable class com.modibo.keepguard.** {
+    *** Companion;
+    *** INSTANCE;
+    kotlinx.serialization.KSerializer serializer(...);
+}
+-keepclasseswithmembers class com.modibo.keepguard.** {
+    kotlinx.serialization.KSerializer serializer(...);
+}
+-keep,includedescriptorclasses class com.modibo.keepguard.**$$serializer { *; }
+-keep class kotlinx.serialization.** { *; }
+
+# Suppress missing class warnings
+-dontwarn com.squareup.okhttp.**
+-dontwarn java.lang.management.**
+-dontwarn java.lang.reflect.AnnotatedType
+-dontwarn io.grpc.**
+-dontwarn io.ktor.**
+-dontwarn com.google.common.**
 
 # Keep line numbers for crash reports
 -keepattributes SourceFile,LineNumberTable
--keepattributes *Annotation*

@@ -114,6 +114,12 @@ fun AssetFormScreen(
         if (success) viewModel.onImageUriChange(tempUri)
     }
 
+    val cameraPermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) camera.launch(tempUri)
+    }
+
     val galerie = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri ->
@@ -249,11 +255,6 @@ fun AssetFormScreen(
                                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                         Spacer(Modifier.height(8.dp))
-                                        Text(
-                                            "Appuyez pour ajouter une photo",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
                                     }
                                 }
                             }
@@ -266,7 +267,7 @@ fun AssetFormScreen(
                         ) {
                             OutlinedCard(
                                 modifier = Modifier.weight(1f).clickable {
-                                    camera.launch(tempUri)
+                                    cameraPermission.launch(android.Manifest.permission.CAMERA)
                                 },
                                 shape = RoundedCornerShape(10.dp)
                             ) {
