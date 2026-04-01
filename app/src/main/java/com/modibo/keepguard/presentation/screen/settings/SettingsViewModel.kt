@@ -131,4 +131,5 @@ class SettingsViewModel @Inject constructor(
     fun clearError() {
         _state.value = _state.value.copy(error = null)
     }
+
 }
