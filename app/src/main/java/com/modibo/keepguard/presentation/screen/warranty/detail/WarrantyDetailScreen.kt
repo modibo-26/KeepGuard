@@ -46,7 +46,7 @@ import java.util.Locale
 fun WarrantyDetailScreen(
     viewModel: WarrantyDetailViewModel = hiltViewModel(),
     onBack: () -> Unit,
-    onEdit: (warrantyId: String, assetId: String) -> Unit,
+    onEdit: (assetId: String, warrantyId: String) -> Unit,
     onDelete: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
@@ -71,7 +71,7 @@ fun WarrantyDetailScreen(
                 },
                 actions = {
                     if (state.warranty != null) {
-                        IconButton(onClick = { onEdit(state.warranty!!.id, state.warranty!!.assetId) }) {
+                        IconButton(onClick = { onEdit(state.warranty!!.assetId, state.warranty!!.id) }) {
                             Icon(Icons.Default.Edit, "Modifier")
                         }
                         IconButton(onClick = { showDeleteDialog = true }) {

@@ -106,7 +106,7 @@ fun AssetFormScreen(
     val imageToShow = state.imageUri ?: state.imageUrl.ifEmpty { null }
     val tempFile = remember { File(context.cacheDir, "images/temp_photo_${System.currentTimeMillis()}.jpg").apply { parentFile?.mkdirs() } }
     val tempUri = remember { FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", tempFile) }
-    val currentStepIndex = AssetFormStep.entries.indexOf(state.assetFormStep)
+    val currentStepIndex = AssetFormStep.entries.indexOf(state.step)
 
     val camera = rememberLauncherForActivityResult(
         ActivityResultContracts.TakePicture()
@@ -183,10 +183,10 @@ fun AssetFormScreen(
             Column(Modifier.padding(16.dp)) {
                 Button(
                     onClick = {
-                        if (state.assetFormStep == AssetFormStep.RECAP) viewModel.saveAsset()
+                        if (state.step == AssetFormStep.RECAP) viewModel.saveAsset()
                         else viewModel.nextStep()
                     },
-                    enabled = when (state.assetFormStep) {
+                    enabled = when (state.step) {
                         AssetFormStep.PHOTO -> true
                         AssetFormStep.CATEGORY -> state.subCategory != null
                         AssetFormStep.INFO_PURCHASE -> state.name.isNotBlank()
@@ -196,7 +196,7 @@ fun AssetFormScreen(
                     shape = RoundedCornerShape(10.dp)
                 ) {
                     Text(
-                        if (state.assetFormStep == AssetFormStep.RECAP) "Enregistrer" else "Suivant →",
+                        if (state.step == AssetFormStep.RECAP) "Enregistrer" else "Suivant →",
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -209,7 +209,7 @@ fun AssetFormScreen(
                 StepperRow(currentStepIndex)
 
                 // Content
-                when (state.assetFormStep) {
+                when (state.step) {
                 // ─── STEP 1 : PHOTO ───
                 AssetFormStep.PHOTO -> {
                     Column(

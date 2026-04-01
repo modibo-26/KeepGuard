@@ -44,7 +44,7 @@ import java.util.Locale
 fun MaintenanceDetailScreen(
     viewModel: MaintenanceDetailViewModel = hiltViewModel(),
     onBack: () -> Unit,
-    onEdit: (maintenanceId: String, assetId: String) -> Unit,
+    onEdit: (assetId: String, maintenanceId: String) -> Unit,
     onDelete: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
@@ -69,7 +69,7 @@ fun MaintenanceDetailScreen(
                 },
                 actions = {
                     if (state.maintenance != null) {
-                        IconButton(onClick = { onEdit(state.maintenance!!.id, state.maintenance!!.assetId) }) {
+                        IconButton(onClick = { onEdit(state.maintenance!!.assetId, state.maintenance!!.id) }) {
                             Icon(Icons.Default.Edit, "Modifier")
                         }
                         IconButton(onClick = { showDeleteDialog = true }) {

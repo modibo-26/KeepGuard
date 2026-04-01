@@ -74,14 +74,14 @@ class AssetFormViewModelTest {
     @Test
     fun `nextStep from PHOTO goes to CATEGORY`() {
         viewModel.nextStep()
-        assertEquals(AssetFormStep.CATEGORY, viewModel.state.value.assetFormStep)
+        assertEquals(AssetFormStep.CATEGORY, viewModel.state.value.step)
     }
 
     @Test
     fun `nextStep from CATEGORY goes to INFO_PURCHASE`() {
         viewModel.nextStep()
         viewModel.nextStep()
-        assertEquals(AssetFormStep.INFO_PURCHASE, viewModel.state.value.assetFormStep)
+        assertEquals(AssetFormStep.INFO_PURCHASE, viewModel.state.value.step)
     }
 
     @Test
@@ -89,7 +89,7 @@ class AssetFormViewModelTest {
         viewModel.nextStep()
         viewModel.nextStep()
         viewModel.nextStep()
-        assertEquals(AssetFormStep.RECAP, viewModel.state.value.assetFormStep)
+        assertEquals(AssetFormStep.RECAP, viewModel.state.value.step)
     }
 
     @Test
@@ -98,14 +98,14 @@ class AssetFormViewModelTest {
         viewModel.nextStep()
         viewModel.nextStep()
         viewModel.nextStep()
-        assertEquals(AssetFormStep.RECAP, viewModel.state.value.assetFormStep)
+        assertEquals(AssetFormStep.RECAP, viewModel.state.value.step)
     }
 
     @Test
     fun `prevStep from CATEGORY goes to PHOTO`() {
         viewModel.nextStep()
         viewModel.prevStep()
-        assertEquals(AssetFormStep.PHOTO, viewModel.state.value.assetFormStep)
+        assertEquals(AssetFormStep.PHOTO, viewModel.state.value.step)
     }
 
     @Test
@@ -113,7 +113,7 @@ class AssetFormViewModelTest {
         viewModel.nextStep()
         viewModel.nextStep()
         viewModel.prevStep()
-        assertEquals(AssetFormStep.CATEGORY, viewModel.state.value.assetFormStep)
+        assertEquals(AssetFormStep.CATEGORY, viewModel.state.value.step)
     }
 
     @Test
@@ -122,13 +122,13 @@ class AssetFormViewModelTest {
         viewModel.nextStep()
         viewModel.nextStep()
         viewModel.prevStep()
-        assertEquals(AssetFormStep.INFO_PURCHASE, viewModel.state.value.assetFormStep)
+        assertEquals(AssetFormStep.INFO_PURCHASE, viewModel.state.value.step)
     }
 
     @Test
     fun `prevStep from PHOTO stays PHOTO`() {
         viewModel.prevStep()
-        assertEquals(AssetFormStep.PHOTO, viewModel.state.value.assetFormStep)
+        assertEquals(AssetFormStep.PHOTO, viewModel.state.value.step)
     }
 
     // ==================== Champs simples ====================

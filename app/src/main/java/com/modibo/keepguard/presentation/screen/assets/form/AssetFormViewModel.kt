@@ -41,7 +41,7 @@ data class AssetFormState(
     val purchaseDate: Long? = null,
     val purchasePrice: Double? = null,
     val originalCreatedAt: Long = 0,
-    val assetFormStep: AssetFormStep = AssetFormStep.PHOTO,
+    val step: AssetFormStep = AssetFormStep.PHOTO,
     val condition: AssetCondition = AssetCondition.NEW,
     val warrantyMonths: Int? = null,
     val scannedDocumentUri: Uri? = null,
@@ -274,18 +274,18 @@ class AssetFormViewModel @Inject constructor(
     }
 
     fun nextStep() {
-        when(state.value.assetFormStep) {
-            AssetFormStep.PHOTO -> _state.value = _state.value.copy(assetFormStep = AssetFormStep.CATEGORY)
-            AssetFormStep.CATEGORY -> _state.value = _state.value.copy(assetFormStep = AssetFormStep.INFO_PURCHASE)
-            AssetFormStep.INFO_PURCHASE -> _state.value = _state.value.copy(assetFormStep = AssetFormStep.RECAP)
+        when(state.value.step) {
+            AssetFormStep.PHOTO -> _state.value = _state.value.copy(step = AssetFormStep.CATEGORY)
+            AssetFormStep.CATEGORY -> _state.value = _state.value.copy(step = AssetFormStep.INFO_PURCHASE)
+            AssetFormStep.INFO_PURCHASE -> _state.value = _state.value.copy(step = AssetFormStep.RECAP)
             else -> return
         }
     }
     fun prevStep() {
-        when(state.value.assetFormStep) {
-            AssetFormStep.CATEGORY -> _state.value = _state.value.copy(assetFormStep = AssetFormStep.PHOTO)
-            AssetFormStep.INFO_PURCHASE -> _state.value = _state.value.copy(assetFormStep = AssetFormStep.CATEGORY)
-            AssetFormStep.RECAP -> _state.value = _state.value.copy(assetFormStep = AssetFormStep.INFO_PURCHASE)
+        when(state.value.step) {
+            AssetFormStep.CATEGORY -> _state.value = _state.value.copy(step = AssetFormStep.PHOTO)
+            AssetFormStep.INFO_PURCHASE -> _state.value = _state.value.copy(step = AssetFormStep.CATEGORY)
+            AssetFormStep.RECAP -> _state.value = _state.value.copy(step = AssetFormStep.INFO_PURCHASE)
             else -> return
         }
     }

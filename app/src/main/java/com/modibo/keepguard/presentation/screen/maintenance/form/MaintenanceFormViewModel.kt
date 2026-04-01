@@ -143,9 +143,10 @@ class MaintenanceFormViewModel @Inject constructor(
                 when (resource) {
                     is Resource.Loading -> _state.value = _state.value.copy(isLoading = true)
                     is Resource.Success -> {
+                        val saved = resource.data ?: return@collect
                         _state.value = _state.value.copy(isSaved = true, isLoading = false)
                         scheduler.schedule(
-                            resource.data!!.id,
+                            saved.id,
                             "Maintenance à faire bientot",
                             "La date de votre entretien approche !",
                             date - Constants.REMINDER_OFFSET_MILLIS
@@ -163,7 +164,7 @@ class MaintenanceFormViewModel @Inject constructor(
                 when (resource) {
                     is Resource.Loading -> _state.value = _state.value.copy(isLoading = true)
                     is Resource.Success -> {
-                        val m = resource.data!!
+                        val m = resource.data ?: return@collect
                         assetId = m.assetId
                         _state.value = _state.value.copy(
                             title = m.title,

@@ -163,7 +163,7 @@ class WarrantyFormViewModel @Inject constructor(
                 when (resource) {
                     is Resource.Loading -> _state.value = _state.value.copy(isLoading = true)
                     is Resource.Success -> {
-                        val warranty = resource.data!!
+                        val warranty = resource.data ?: return@collect
                         assetId = warranty.assetId
                         _state.value = _state.value.copy(
                             type = warranty.type,
